@@ -1,3 +1,11 @@
+# -*- coding: utf-8 -*-
+"""
+pytest-pylint
+=============
+
+Plugin for py.test for doing pylint tests
+"""
+
 from setuptools import setup
 
 setup(

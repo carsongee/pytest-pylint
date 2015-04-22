@@ -75,15 +75,18 @@ class PyLintItem(pytest.Item, pytest.File):
         args_list = [unicode(self.fspath)]
         if self.config.option.pylint_rcfile:
             args_list.append('--rcfile={0}'.format(
-                self.config.pylint_rcfile
+                self.config.option.pylint_rcfile
             ))
         lint.Run(args_list, reporter=reporter, exit=False)
+        reported_errors = []
         for error in reporter.data:
             if error['msg_level'] in self.config.option.pylint_error_types:
-                raise PyLintException(
-                    '{msg_level}{msg_id}:{line},{col_offset}{obj}:'
+                reported_errors.append(
+                    '{msg_level}{msg_id}:{line},{col_offset} {obj}: '
                     '{msg}'.format(**error)
                 )
+        if reported_errors:
+            raise PyLintException('\n'.join(reported_errors))
 
     def repr_failure(self, excinfo):
         if excinfo.errisinstance(PyLintException):
