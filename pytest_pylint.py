@@ -21,17 +21,12 @@ class ProgrammaticReporter(BaseReporter):
         self.data = []
 
     def add_message(self, msg_id, location, msg):
+        """Deprecated, but required"""
+        raise NotImplementedError
+
+    def handle_message(self, msg):
         """Get message and append to our data structure"""
-        module, obj, line, col_offset = location[1:]
-        self.data.append(dict(
-            module=module,
-            obj=obj,
-            line=line,
-            col_offset=col_offset,
-            msg_id=msg_id[1:],
-            msg_level=msg_id[0],
-            msg=msg
-        ))
+        self.data.append(msg)
 
     def _display(self, layout):
         """launch layouts display"""
@@ -90,10 +85,10 @@ class PyLintItem(pytest.Item, pytest.File):
         lint.Run(args_list, reporter=reporter, exit=False)
         reported_errors = []
         for error in reporter.data:
-            if error['msg_level'] in self.config.option.pylint_error_types:
+            if error.C in self.config.option.pylint_error_types:
                 reported_errors.append(
-                    '{msg_level}{msg_id}:{line},{col_offset} {obj}: '
-                    '{msg}'.format(**error)
+                    '{msg.C}:{msg.line:3d},{msg.column:2d}: '
+                    '{msg.msg} ({msg.symbol})'.format(msg=error)
                 )
         if reported_errors:
             raise PyLintException('\n'.join(reported_errors))
