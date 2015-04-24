@@ -1,4 +1,7 @@
 """Pylint plugin for py.test"""
+from __future__ import unicode_literals
+from __future__ import absolute_import
+
 import pytest
 
 from pylint import lint
@@ -79,7 +82,7 @@ class PyLintItem(pytest.Item, pytest.File):
         """Setup and run pylint for the given test file."""
         reporter = ProgrammaticReporter()
         # Build argument list for pylint
-        args_list = [unicode(self.fspath)]
+        args_list = [str(self.fspath)]
         if self.config.option.pylint_rcfile:
             args_list.append('--rcfile={0}'.format(
                 self.config.option.pylint_rcfile
