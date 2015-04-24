@@ -19,5 +19,13 @@ setup(
     url='https://github.com/carsongee/pytest-pylint',
     py_modules=['pytest_pylint'],
     entry_points={'pytest11': ['pylint = pytest_pylint']},
-    install_requires=['pytest>=2.4', 'pylint']
+    install_requires=['pytest>=2.4', 'pylint'],
+    classifiers=[
+        'Development Status :: 5 - Production/Stable',
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: MIT License',
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.3',
+        'Programming Language :: Python :: 3.4',
+    ],
 )
