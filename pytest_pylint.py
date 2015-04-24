@@ -36,6 +36,7 @@ class ProgrammaticReporter(BaseReporter):
 
 
 def pytest_addoption(parser):
+    """Add all our command line options"""
     group = parser.getgroup("general")
     group.addoption(
         "--pylint",
@@ -56,6 +57,7 @@ def pytest_addoption(parser):
 
 
 def pytest_collect_file(path, parent):
+    """Handle running pylint on files discovered"""
     config = parent.config
     if path.ext == ".py":
         if config.option.pylint:
@@ -68,8 +70,13 @@ class PyLintException(Exception):
 
 
 class PyLintItem(pytest.Item, pytest.File):
-
+    """pylint test running class."""
+    # pylint doesn't deal well with dynamic modules and there isn't an
+    # astng plugin for pylint in pypi yet, so we'll have to disable
+    # the checks.
+    # pylint: disable=no-member,no-init,super-on-old-class
     def runtest(self):
+        """Setup and run pylint for the given test file."""
         reporter = ProgrammaticReporter()
         # Build argument list for pylint
         args_list = [unicode(self.fspath)]
@@ -89,9 +96,11 @@ class PyLintItem(pytest.Item, pytest.File):
             raise PyLintException('\n'.join(reported_errors))
 
     def repr_failure(self, excinfo):
+        """Handle any test failures by checkint that they were ours."""
         if excinfo.errisinstance(PyLintException):
             return excinfo.value.args[0]
         return super(PyLintItem, self).repr_failure(excinfo)
 
     def reportinfo(self):
+        """Generate our test report"""
         return self.fspath, None, "[pylint] {0}".format(self.name)
