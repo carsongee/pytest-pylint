@@ -1,12 +1,18 @@
 """Pylint plugin for py.test"""
 from __future__ import unicode_literals
 from __future__ import absolute_import
-
-import pytest
+from os.path import exists
 
 from pylint import lint
+from pylint.config import PYLINTRC
 from pylint.interfaces import IReporter
 from pylint.reporters import BaseReporter
+import pytest
+from six.moves.configparser import (  # pylint: disable=import-error
+    ConfigParser,
+    NoSectionError,
+    NoOptionError
+)
 
 
 class ProgrammaticReporter(BaseReporter):
@@ -30,7 +36,6 @@ class ProgrammaticReporter(BaseReporter):
 
     def _display(self, layout):
         """launch layouts display"""
-        pass
 
 
 def pytest_addoption(parser):
@@ -57,9 +62,28 @@ def pytest_addoption(parser):
 def pytest_collect_file(path, parent):
     """Handle running pylint on files discovered"""
     config = parent.config
-    if path.ext == ".py":
-        if config.option.pylint:
-            return PyLintItem(path, parent)
+    if not config.option.pylint:
+        return
+    if not path.ext == ".py":
+        return
+    # Find pylintrc to check ignore list
+    pylintrc_file = config.option.pylint_rcfile or PYLINTRC
+    # No pylintrc, therefore no ignores, so return the item.
+    if not pylintrc_file or not exists(pylintrc_file):
+        return PyLintItem(path, parent)
+
+    pylintrc = ConfigParser()
+    pylintrc.read(pylintrc_file)
+    ignore_list = []
+    try:
+        ignore_string = pylintrc.get('MASTER', 'ignore')
+        if len(ignore_string) > 0:
+            ignore_list = ignore_string.split(',')
+    except (NoSectionError, NoOptionError):
+        pass
+    rel_path = path.strpath.replace(parent.fspath.strpath, '', 1)[1:]
+    if not any(basename in rel_path for basename in ignore_list):
+        return PyLintItem(path, parent)
 
 
 class PyLintException(Exception):
