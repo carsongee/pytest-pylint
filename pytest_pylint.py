@@ -101,7 +101,7 @@ class PyLintItem(pytest.Item, pytest.File):
     # pylint doesn't deal well with dynamic modules and there isn't an
     # astng plugin for pylint in pypi yet, so we'll have to disable
     # the checks.
-    # pylint: disable=no-member,no-init,super-on-old-class
+    # pylint: disable=no-member,super-on-old-class
     def __init__(self, fspath, parent, msg_format=None):
         super(PyLintItem, self).__init__(fspath, parent)
 
