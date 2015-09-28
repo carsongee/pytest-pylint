@@ -49,3 +49,17 @@ ignore = test_pylintrc_ignore.py
         '--pylint', '--pylint-rcfile={0}'.format(rcfile.strpath)
     )
     assert 'collected 0 items' in result.stdout.str()
+
+
+def test_pylintrc_msg_template(testdir):
+    """Verify that msg-template from pylintrc file is handled."""
+    rcfile = testdir.makefile('rc', """
+[REPORTS]
+
+msg-template=start {msg_id} end
+""")
+    testdir.makepyfile("""import sys""")
+    result = testdir.runpytest(
+        '--pylint', '--pylint-rcfile={0}'.format(rcfile.strpath)
+    )
+    assert 'start W0611 end' in result.stdout.str()

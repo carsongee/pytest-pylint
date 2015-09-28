@@ -81,9 +81,14 @@ def pytest_collect_file(path, parent):
             ignore_list = ignore_string.split(',')
     except (NoSectionError, NoOptionError):
         pass
+    msg_template = None
+    try:
+        msg_template = pylintrc.get('REPORTS', 'msg-template')
+    except (NoSectionError, NoOptionError):
+        pass
     rel_path = path.strpath.replace(parent.fspath.strpath, '', 1)[1:]
     if not any(basename in rel_path for basename in ignore_list):
-        return PyLintItem(path, parent)
+        return PyLintItem(path, parent, msg_template)
 
 
 class PyLintException(Exception):
@@ -96,7 +101,15 @@ class PyLintItem(pytest.Item, pytest.File):
     # pylint doesn't deal well with dynamic modules and there isn't an
     # astng plugin for pylint in pypi yet, so we'll have to disable
     # the checks.
-    # pylint: disable=no-member,no-init,super-on-old-class
+    # pylint: disable=no-member,super-on-old-class
+    def __init__(self, fspath, parent, msg_format=None):
+        super(PyLintItem, self).__init__(fspath, parent)
+
+        if msg_format is None:
+            self._msg_format = '{C}:{line:3d},{column:2d}: {msg} ({symbol})'
+        else:
+            self._msg_format = msg_format
+
     def runtest(self):
         """Setup and run pylint for the given test file."""
         reporter = ProgrammaticReporter()
@@ -111,8 +124,7 @@ class PyLintItem(pytest.Item, pytest.File):
         for error in reporter.data:
             if error.C in self.config.option.pylint_error_types:
                 reported_errors.append(
-                    '{msg.C}:{msg.line:3d},{msg.column:2d}: '
-                    '{msg.msg} ({msg.symbol})'.format(msg=error)
+                    error.format(self._msg_format)
                 )
         if reported_errors:
             raise PyLintException('\n'.join(reported_errors))
