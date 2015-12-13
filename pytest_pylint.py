@@ -2,17 +2,17 @@
 from __future__ import unicode_literals
 from __future__ import absolute_import
 from os.path import exists
+from six.moves.configparser import (  # pylint: disable=import-error
+    ConfigParser,
+    NoSectionError,
+    NoOptionError
+)
 
 from pylint import lint
 from pylint.config import PYLINTRC
 from pylint.interfaces import IReporter
 from pylint.reporters import BaseReporter
 import pytest
-from six.moves.configparser import (  # pylint: disable=import-error
-    ConfigParser,
-    NoSectionError,
-    NoOptionError
-)
 
 
 class ProgrammaticReporter(BaseReporter):
@@ -64,7 +64,7 @@ def pytest_collect_file(path, parent):
     config = parent.config
     if not config.option.pylint:
         return
-    if not path.ext == ".py":
+    if path.ext != ".py":
         return
     # Find pylintrc to check ignore list
     pylintrc_file = config.option.pylint_rcfile or PYLINTRC
