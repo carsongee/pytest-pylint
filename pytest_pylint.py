@@ -1,7 +1,7 @@
 """Pylint plugin for py.test"""
 from __future__ import unicode_literals
 from __future__ import absolute_import
-from os.path import exists
+from os.path import exists, join
 from six.moves.configparser import (  # pylint: disable=import-error
     ConfigParser,
     NoSectionError,
@@ -66,10 +66,16 @@ def pytest_collect_file(path, parent):
         return
     if path.ext != ".py":
         return
+
     # Find pylintrc to check ignore list
     pylintrc_file = config.option.pylint_rcfile or PYLINTRC
-    # No pylintrc, therefore no ignores, so return the item.
+
+    if pylintrc_file and not exists(pylintrc_file):
+        # The directory of pytest.ini got a chance
+        pylintrc_file = join(config.inifile.dirname, pylintrc_file)
+
     if not pylintrc_file or not exists(pylintrc_file):
+        # No pylintrc, therefore no ignores, so return the item.
         return PyLintItem(path, parent)
 
     pylintrc = ConfigParser()
@@ -88,7 +94,7 @@ def pytest_collect_file(path, parent):
         pass
     rel_path = path.strpath.replace(parent.fspath.strpath, '', 1)[1:]
     if not any(basename in rel_path for basename in ignore_list):
-        return PyLintItem(path, parent, msg_template)
+        return PyLintItem(path, parent, msg_template, pylintrc_file)
 
 
 class PyLintException(Exception):
@@ -102,7 +108,7 @@ class PyLintItem(pytest.Item, pytest.File):
     # astng plugin for pylint in pypi yet, so we'll have to disable
     # the checks.
     # pylint: disable=no-member,super-on-old-class
-    def __init__(self, fspath, parent, msg_format=None):
+    def __init__(self, fspath, parent, msg_format=None, pylintrc_file=None):
         super(PyLintItem, self).__init__(fspath, parent)
 
         if msg_format is None:
@@ -110,14 +116,16 @@ class PyLintItem(pytest.Item, pytest.File):
         else:
             self._msg_format = msg_format
 
+        self.pylintrc_file = pylintrc_file
+
     def runtest(self):
         """Setup and run pylint for the given test file."""
         reporter = ProgrammaticReporter()
         # Build argument list for pylint
         args_list = [str(self.fspath)]
-        if self.config.option.pylint_rcfile:
+        if self.pylintrc_file:
             args_list.append('--rcfile={0}'.format(
-                self.config.option.pylint_rcfile
+                self.pylintrc_file
             ))
         lint.Run(args_list, reporter=reporter, exit=False)
         reported_errors = []
