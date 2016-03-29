@@ -37,6 +37,39 @@ max-line-length=3
     assert 'Line too long (10/3)' in result.stdout.str()
 
 
+def test_pylintrc_file_beside_ini(testdir):
+    """
+    Verify that a specified pylint rc file will work what placed into pytest
+    ini dir.
+    """
+    non_cwd_dir = testdir.mkdir('non_cwd_dir')
+
+    rcfile = non_cwd_dir.join('foo.rc')
+    rcfile.write("""
+[FORMAT]
+
+max-line-length=3
+""")
+
+    inifile = non_cwd_dir.join('foo.ini')
+    inifile.write("""
+[pytest]
+addopts = --pylint --pylint-rcfile={0}
+""".format(rcfile.basename))
+
+    pyfile = testdir.makepyfile("""import sys""")
+
+    result = testdir.runpytest(
+        pyfile.strpath
+    )
+    assert 'Line too long (10/3)' not in result.stdout.str()
+
+    result = testdir.runpytest(
+        '-c', inifile.strpath, pyfile.strpath
+    )
+    assert 'Line too long (10/3)' in result.stdout.str()
+
+
 def test_pylintrc_ignore(testdir):
     """Verify that a pylintrc file with ignores will work."""
     rcfile = testdir.makefile('rc', """
