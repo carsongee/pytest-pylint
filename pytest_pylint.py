@@ -111,6 +111,8 @@ class PyLintItem(pytest.Item, pytest.File):
     def __init__(self, fspath, parent, msg_format=None, pylintrc_file=None):
         super(PyLintItem, self).__init__(fspath, parent)
 
+        self.add_marker("pylint")
+
         if msg_format is None:
             self._msg_format = '{C}:{line:3d},{column:2d}: {msg} ({symbol})'
         else:

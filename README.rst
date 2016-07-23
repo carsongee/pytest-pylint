@@ -30,6 +30,13 @@ would be the most simple usage and would run pylint for all error messages.
 This would use the pylintrc file at /my/pyrc and only error on pylint
 Errors and Failures.
 
+You can restrict your test run to only perform pylint checks and not any other
+tests by typing:
+
+.. code-block:: shell
+
+    py.test --pylint -m pylint
+
 Acknowledgements
 ================
 
