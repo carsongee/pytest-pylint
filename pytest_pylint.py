@@ -1,6 +1,7 @@
 """Pylint plugin for py.test"""
 from __future__ import unicode_literals
 from __future__ import absolute_import
+from __future__ import print_function
 from os.path import exists, join, dirname
 from six.moves.configparser import (  # pylint: disable=import-error
     ConfigParser,
@@ -59,13 +60,15 @@ def pytest_addoption(parser):
     )
 
 
-def pytest_collect_file(path, parent):
-    """Handle running pylint on files discovered"""
-    config = parent.config
-    if not config.option.pylint:
-        return
-    if path.ext != ".py":
-        return
+def pytest_sessionstart(session):
+    """Storing pylint settings on the session"""
+    session.pylint_files = set()
+    session.pylint_messages = {}
+    session.pylint_config = None
+    session.pylintrc_file = None
+    session.pylint_ignore = []
+    session.pylint_msg_template = None
+    config = session.config
 
     # Find pylintrc to check ignore list
     pylintrc_file = config.option.pylint_rcfile or PYLINTRC
@@ -74,27 +77,64 @@ def pytest_collect_file(path, parent):
         # The directory of pytest.ini got a chance
         pylintrc_file = join(dirname(str(config.inifile)), pylintrc_file)
 
-    if not pylintrc_file or not exists(pylintrc_file):
+    if pylintrc_file and exists(pylintrc_file):
+        session.pylintrc_file = pylintrc_file
+        session.pylint_config = ConfigParser()
+        session.pylint_config.read(pylintrc_file)
+        try:
+            ignore_string = session.pylint_config.get('MASTER', 'ignore')
+            if len(ignore_string) > 0:
+                session.pylint_ignore = ignore_string.split(',')
+        except (NoSectionError, NoOptionError):
+            pass
+        try:
+            session.pylint_msg_template = session.pylint_config.get(
+                'REPORTS', 'msg-template'
+            )
+        except (NoSectionError, NoOptionError):
+            pass
+
+
+def pytest_collect_file(path, parent):
+    """Collect files on which pylint should run"""
+    config = parent.config
+    if not config.option.pylint:
+        return
+    if path.ext != ".py":
+        return
+    rel_path = path.strpath.replace(parent.fspath.strpath, '', 1)[1:]
+    if parent.pylint_config is None:
+        parent.pylint_files.add(rel_path)
         # No pylintrc, therefore no ignores, so return the item.
         return PyLintItem(path, parent)
 
-    pylintrc = ConfigParser()
-    pylintrc.read(pylintrc_file)
-    ignore_list = []
-    try:
-        ignore_string = pylintrc.get('MASTER', 'ignore')
-        if len(ignore_string) > 0:
-            ignore_list = ignore_string.split(',')
-    except (NoSectionError, NoOptionError):
-        pass
-    msg_template = None
-    try:
-        msg_template = pylintrc.get('REPORTS', 'msg-template')
-    except (NoSectionError, NoOptionError):
-        pass
-    rel_path = path.strpath.replace(parent.fspath.strpath, '', 1)[1:]
-    if not any(basename in rel_path for basename in ignore_list):
-        return PyLintItem(path, parent, msg_template, pylintrc_file)
+    if not any(basename in rel_path for basename in parent.pylint_ignore):
+        parent.pylint_files.add(rel_path)
+        return PyLintItem(
+            path, parent, parent.pylint_msg_template, parent.pylintrc_file
+        )
+
+
+def pytest_collection_finish(session):
+    """Lint collected files and store messages on session"""
+    print('-' * 65)
+    print('Linting files')
+    reporter = ProgrammaticReporter()
+    # Build argument list for pylint
+    args_list = list(session.pylint_files)
+    if session.pylintrc_file:
+        args_list.append('--rcfile={0}'.format(
+            session.pylintrc_file
+        ))
+    # Run pylint over the collected files.
+    result = lint.Run(args_list, reporter=reporter, exit=False)
+    messages = result.linter.reporter.data
+    # Stores the messages in a dictionary for lookup in tests.
+    for message in messages:
+        if message.path not in session.pylint_messages:
+            session.pylint_messages[message.path] = []
+        session.pylint_messages[message.path].append(message)
+    print('-' * 65)
 
 
 class PyLintException(Exception):
@@ -112,6 +152,9 @@ class PyLintItem(pytest.Item, pytest.File):
         super(PyLintItem, self).__init__(fspath, parent)
 
         self.add_marker("pylint")
+        self.rel_path = fspath.strpath.replace(
+            parent.fspath.strpath, '', 1
+        )[1:]
 
         if msg_format is None:
             self._msg_format = '{C}:{line:3d},{column:2d}: {msg} ({symbol})'
@@ -121,17 +164,9 @@ class PyLintItem(pytest.Item, pytest.File):
         self.pylintrc_file = pylintrc_file
 
     def runtest(self):
-        """Setup and run pylint for the given test file."""
-        reporter = ProgrammaticReporter()
-        # Build argument list for pylint
-        args_list = [str(self.fspath)]
-        if self.pylintrc_file:
-            args_list.append('--rcfile={0}'.format(
-                self.pylintrc_file
-            ))
-        lint.Run(args_list, reporter=reporter, exit=False)
+        """Check the pylint messages to see if any errors were reported."""
         reported_errors = []
-        for error in reporter.data:
+        for error in self.session.pylint_messages.get(self.rel_path, []):
             if error.C in self.config.option.pylint_error_types:
                 reported_errors.append(
                     error.format(self._msg_format)
