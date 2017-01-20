@@ -116,9 +116,9 @@ def pytest_collect_file(path, parent):
 
 
 def pytest_collection_finish(session):
-    """Lint collected files and store messages on session"""
-    print('-' * 65)
-    print('Linting files')
+    """Lint collected files and store messages on session."""
+    if not session.pylint_files:
+        return
     reporter = ProgrammaticReporter()
     # Build argument list for pylint
     args_list = list(session.pylint_files)
@@ -126,6 +126,8 @@ def pytest_collection_finish(session):
         args_list.append('--rcfile={0}'.format(
             session.pylintrc_file
         ))
+    print('-' * 65)
+    print('Linting files')
     # Run pylint over the collected files.
     result = lint.Run(args_list, reporter=reporter, exit=False)
     messages = result.linter.reporter.data
