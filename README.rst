@@ -42,3 +42,13 @@ Acknowledgements
 
 This code is heavily based on 
 `pytest-flakes <https://github.com/fschulze/pytest-flakes>`_
+
+
+Releases
+========
+
+0.7.0
+~~~~~
+
+- Linting is performed before tests which enables code duplication
+  checks to work along with a performance boost, thanks to @heoga
