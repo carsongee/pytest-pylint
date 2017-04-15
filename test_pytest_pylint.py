@@ -3,7 +3,7 @@
 Unit testing module for pytest-pylti plugin
 """
 
-pytest_plugins = 'pytester',  # pylint: disable=invalid-name
+pytest_plugins = ('pytester',)  # pylint: disable=invalid-name
 
 
 def test_basic(testdir):
@@ -96,3 +96,17 @@ msg-template=start {msg_id} end
         '--pylint', '--pylint-rcfile={0}'.format(rcfile.strpath)
     )
     assert 'start W0611 end' in result.stdout.str()
+
+
+def test_get_rel_path():
+    """
+    Verify our relative path function.
+    """
+    from pytest_pylint import get_rel_path
+    correct_rel_path = 'How/Are/You/blah.py'
+    path = '/Hi/How/Are/You/blah.py'
+    parent_path = '/Hi/'
+    assert get_rel_path(path, parent_path) == correct_rel_path
+
+    parent_path = '/Hi'
+    assert get_rel_path(path, parent_path) == correct_rel_path
