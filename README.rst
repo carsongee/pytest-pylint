@@ -47,6 +47,11 @@ This code is heavily based on
 Releases
 ========
 
+0.7.1
+~~~~~
+
+- Corrected path issue reported by `Kargathia <https://github.com/Kargathia>`_
+
 0.7.0
 ~~~~~
 
