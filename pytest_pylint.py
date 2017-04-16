@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 from __future__ import absolute_import
 from __future__ import print_function
+from os import sep
 from os.path import exists, join, dirname
 from six.moves.configparser import (  # pylint: disable=import-error
     ConfigParser,
@@ -14,6 +15,11 @@ from pylint.config import PYLINTRC
 from pylint.interfaces import IReporter
 from pylint.reporters import BaseReporter
 import pytest
+
+
+class PyLintException(Exception):
+    """Exception to raise if a file has a specified pylint error"""
+    pass
 
 
 class ProgrammaticReporter(BaseReporter):
@@ -37,6 +43,18 @@ class ProgrammaticReporter(BaseReporter):
 
     def _display(self, layout):
         """launch layouts display"""
+
+
+def get_rel_path(path, parent_path):
+    """
+    Give the path to object relative to ``parent_path``.
+    """
+    replaced_path = path.replace(parent_path, '', 1)
+    if replaced_path[0] == sep:
+        rel_path = replaced_path[1:]
+    else:
+        rel_path = replaced_path
+    return rel_path
 
 
 def pytest_addoption(parser):
@@ -83,7 +101,7 @@ def pytest_sessionstart(session):
         session.pylint_config.read(pylintrc_file)
         try:
             ignore_string = session.pylint_config.get('MASTER', 'ignore')
-            if len(ignore_string) > 0:
+            if ignore_string:
                 session.pylint_ignore = ignore_string.split(',')
         except (NoSectionError, NoOptionError):
             pass
@@ -102,7 +120,7 @@ def pytest_collect_file(path, parent):
         return
     if path.ext != ".py":
         return
-    rel_path = path.strpath.replace(parent.fspath.strpath, '', 1)[1:]
+    rel_path = get_rel_path(path.strpath, parent.fspath.strpath)
     if parent.pylint_config is None:
         parent.pylint_files.add(rel_path)
         # No pylintrc, therefore no ignores, so return the item.
@@ -139,11 +157,6 @@ def pytest_collection_finish(session):
     print('-' * 65)
 
 
-class PyLintException(Exception):
-    """Exception to raise if a file has a specified pylint error"""
-    pass
-
-
 class PyLintItem(pytest.Item, pytest.File):
     """pylint test running class."""
     # pylint doesn't deal well with dynamic modules and there isn't an
@@ -154,9 +167,7 @@ class PyLintItem(pytest.Item, pytest.File):
         super(PyLintItem, self).__init__(fspath, parent)
 
         self.add_marker("pylint")
-        self.rel_path = fspath.strpath.replace(
-            parent.fspath.strpath, '', 1
-        )[1:]
+        self.rel_path = get_rel_path(fspath.strpath, parent.fspath.strpath)
 
         if msg_format is None:
             self._msg_format = '{C}:{line:3d},{column:2d}: {msg} ({symbol})'
