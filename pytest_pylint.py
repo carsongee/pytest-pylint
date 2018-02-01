@@ -117,9 +117,9 @@ def pytest_collect_file(path, parent):
     """Collect files on which pylint should run"""
     config = parent.config
     if not config.option.pylint:
-        return
+        return None
     if path.ext != ".py":
-        return
+        return None
     rel_path = get_rel_path(path.strpath, parent.fspath.strpath)
     if parent.pylint_config is None:
         parent.pylint_files.add(rel_path)
@@ -131,6 +131,7 @@ def pytest_collect_file(path, parent):
         return PyLintItem(
             path, parent, parent.pylint_msg_template, parent.pylintrc_file
         )
+    return None
 
 
 def pytest_collection_finish(session):
