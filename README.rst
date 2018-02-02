@@ -47,6 +47,12 @@ This code is heavily based on
 Releases
 ========
 
+0.8.0
+~~~~~
+
+- `bdrung <https://github.com/bdrung>`_ corrected inconsitent returns in a function
+- Dropped Python 3.3 support
+
 0.7.1
 ~~~~~
 
