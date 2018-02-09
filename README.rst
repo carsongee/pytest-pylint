@@ -6,8 +6,10 @@ pytest pylint
     :target: https://coveralls.io/r/carsongee/pytest-pylint
 .. image:: https://img.shields.io/pypi/v/pytest-pylint.svg
     :target: https://pypi.python.org/pypi/pytest-pylint
-.. image:: https://img.shields.io/pypi/dm/pytest-pylint.svg
-    :target: https://pypi.python.org/pypi/pytest-pylint
+.. image:: https://anaconda.org/conda-forge/pytest-pylint/badges/version.svg
+   :target: https://anaconda.org/conda-forge/pytest-pylint
+.. image:: https://anaconda.org/conda-forge/pytest-pylint/badges/downloads.svg
+    :target: https://anaconda.org/conda-forge/pytest-pylint
 .. image:: https://img.shields.io/pypi/l/pytest-pylint.svg
     :target: https://pypi.python.org/pypi/pytest-pylint
 
