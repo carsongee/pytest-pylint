@@ -27,10 +27,10 @@ would be the most simple usage and would run pylint for all error messages.
 
 .. code-block:: shell
 
-   py.test --pylint --pylint-rcfile=/my/pyrc --pylint-error-types=EF
+   py.test --pylint --pylint-rcfile=/my/pyrc --pylint-error-types=EF --pylint-jobs=4
 
-This would use the pylintrc file at /my/pyrc and only error on pylint
-Errors and Failures.
+This would use the pylintrc file at /my/pyrc, only error on pylint
+Errors and Failures, and use 4 cores for running pylint.
 
 You can restrict your test run to only perform pylint checks and not any other
 tests by typing:
@@ -48,6 +48,12 @@ This code is heavily based on
 
 Releases
 ========
+
+0.9.0
+~~~~~
+
+- `noisecapella <https://github.com/noisecapella>`_ added an option to
+  run pylint with multiple processes
 
 0.8.0
 ~~~~~
