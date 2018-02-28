@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-Unit testing module for pytest-pylti plugin
+Unit testing module for pytest-pylint plugin
 """
+import mock
+
 
 pytest_plugins = ('pytester',)  # pylint: disable=invalid-name
 
@@ -110,3 +112,28 @@ def test_get_rel_path():
 
     parent_path = '/Hi'
     assert get_rel_path(path, parent_path) == correct_rel_path
+
+
+def test_multiple_jobs(testdir):
+    """
+    Assert that the jobs argument is passed through to pylint if provided
+    """
+    testdir.makepyfile("""import sys""")
+    with mock.patch('pytest_pylint.lint.Run') as run_mock:
+        jobs = 0
+        testdir.runpytest(
+            '--pylint', '--pylint-jobs={0}'.format(jobs)
+        )
+    assert run_mock.call_count == 1
+    assert run_mock.call_args[0][0][-2:] == ['-j', str(jobs)]
+
+
+def test_no_multiple_jobs(testdir):
+    """
+    If no jobs argument is specified it should not appear in pylint arguments
+    """
+    testdir.makepyfile("""import sys""")
+    with mock.patch('pytest_pylint.lint.Run') as run_mock:
+        testdir.runpytest('--pylint')
+    assert run_mock.call_count == 1
+    assert '-j' not in run_mock.call_args[0][0]
