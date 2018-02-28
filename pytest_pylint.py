@@ -76,6 +76,11 @@ def pytest_addoption(parser):
         help='The types of pylint errors to consider failures by letter'
         ', default is all of them (CRWEF).'
     )
+    group.addoption(
+        '--pylint-jobs',
+        default=None,
+        help='Specify number of processes to use for pylint'
+    )
 
 
 def pytest_sessionstart(session):
@@ -138,6 +143,8 @@ def pytest_collection_finish(session):
     """Lint collected files and store messages on session."""
     if not session.pylint_files:
         return
+
+    jobs = session.config.option.pylint_jobs
     reporter = ProgrammaticReporter()
     # Build argument list for pylint
     args_list = list(session.pylint_files)
@@ -145,6 +152,9 @@ def pytest_collection_finish(session):
         args_list.append('--rcfile={0}'.format(
             session.pylintrc_file
         ))
+    if jobs is not None:
+        args_list.append('-j')
+        args_list.append(jobs)
     print('-' * 65)
     print('Linting files')
     # Run pylint over the collected files.
