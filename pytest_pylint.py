@@ -158,7 +158,7 @@ def pytest_collection_finish(session):
     print('-' * 65)
     print('Linting files')
     # Run pylint over the collected files.
-    result = lint.Run(args_list, reporter=reporter, exit=False)
+    result = lint.Run(args_list, reporter=reporter, do_exit=False)
     messages = result.linter.reporter.data
     # Stores the messages in a dictionary for lookup in tests.
     for message in messages:
