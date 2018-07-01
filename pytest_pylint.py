@@ -157,8 +157,14 @@ def pytest_collection_finish(session):
         args_list.append(jobs)
     print('-' * 65)
     print('Linting files')
+    # Disabling keyword arg to handle both 1.x and 2.x pylint API calls
+    # pylint: disable=unexpected-keyword-arg
+
     # Run pylint over the collected files.
-    result = lint.Run(args_list, reporter=reporter, exit=False)
+    try:
+        result = lint.Run(args_list, reporter=reporter, exit=False)
+    except TypeError:  # Handle pylint 2.0 API
+        result = lint.Run(args_list, reporter=reporter, do_exit=False)
     messages = result.linter.reporter.data
     # Stores the messages in a dictionary for lookup in tests.
     for message in messages:
@@ -173,7 +179,7 @@ class PyLintItem(pytest.Item, pytest.File):
     # pylint doesn't deal well with dynamic modules and there isn't an
     # astng plugin for pylint in pypi yet, so we'll have to disable
     # the checks.
-    # pylint: disable=no-member,super-on-old-class
+    # pylint: disable=no-member,super-on-old-class,abstract-method
     def __init__(self, fspath, parent, msg_format=None, pylintrc_file=None):
         super(PyLintItem, self).__init__(fspath, parent)
 
