@@ -157,8 +157,14 @@ def pytest_collection_finish(session):
         args_list.append(jobs)
     print('-' * 65)
     print('Linting files')
+    # Disabling keyword arg to handle both 1.x and 2.x pylint API calls
+    # pylint: disable=unexpected-keyword-arg
+
     # Run pylint over the collected files.
-    result = lint.Run(args_list, reporter=reporter, exit=False)
+    try:
+        result = lint.Run(args_list, reporter=reporter, exit=False)
+    except TypeError:  # Handle pylint 2.0 API
+        result = lint.Run(args_list, reporter=reporter, do_exit=False)
     messages = result.linter.reporter.data
     # Stores the messages in a dictionary for lookup in tests.
     for message in messages:
