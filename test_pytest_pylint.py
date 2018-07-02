@@ -16,6 +16,15 @@ def test_basic(testdir):
     assert 'Unused import sys' in result.stdout.str()
     assert 'Final newline missing' in result.stdout.str()
     assert 'passed' not in result.stdout.str()
+    assert 'Linting files' in result.stdout.str()
+
+
+def test_disable(testdir):
+    """Verify basic pylint checks"""
+    testdir.makepyfile("""import sys""")
+    result = testdir.runpytest('--pylint --no-pylint')
+    assert 'Final newline missing' not in result.stdout.str()
+    assert 'Linting files' not in result.stdout.str()
 
 
 def test_error_control(testdir):
