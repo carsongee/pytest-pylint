@@ -66,6 +66,12 @@ def pytest_addoption(parser):
         help="run pylint on all"
     )
     group.addoption(
+        "--no-pylint",
+        action="store_true", default=False,
+        help="disable running pylint "
+    )
+
+    group.addoption(
         '--pylint-rcfile',
         default=None,
         help='Location of RC file if not pylintrc'
@@ -121,7 +127,7 @@ def pytest_sessionstart(session):
 def pytest_collect_file(path, parent):
     """Collect files on which pylint should run"""
     config = parent.config
-    if not config.option.pylint:
+    if not config.option.pylint or config.option.no_pylint:
         return None
     if path.ext != ".py":
         return None
