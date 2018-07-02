@@ -49,6 +49,12 @@ This code is heavily based on
 Releases
 ========
 
+0.11.0
+~~~~~~
+
+- Added option ``--no-pylint`` to override ``--pylint`` for cases when
+  it's turned on by default.
+
 0.10.0
 ~~~~~~
 
