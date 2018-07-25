@@ -58,7 +58,7 @@ Releases
 0.10.0
 ~~~~~~
 
-- `jqkvan <https://github.com/jwkvam>`_ provided support for pylint 2.0
+- `jwkvan <https://github.com/jwkvam>`_ provided support for pylint 2.0
 
 0.9.0
 ~~~~~
