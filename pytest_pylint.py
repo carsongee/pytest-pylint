@@ -4,6 +4,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 from os import sep
 from os.path import exists, join, dirname
+import sys
 from six.moves.configparser import (  # pylint: disable=import-error
     ConfigParser,
     NoSectionError,
@@ -43,6 +44,16 @@ class ProgrammaticReporter(BaseReporter):
 
     def _display(self, layout):
         """launch layouts display"""
+
+    def on_set_current_module(self, module, filepath):
+        """Hook called when a module starts to be analysed."""
+        print('.', end='')
+        sys.stdout.flush()
+
+    def on_close(self, stats, previous_stats):
+        """Hook called when all modules finished analyzing."""
+        # print a new line when pylint is finished
+        print('')
 
 
 def get_rel_path(path, parent_path):
