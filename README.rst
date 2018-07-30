@@ -49,6 +49,11 @@ This code is heavily based on
 Releases
 ========
 
+0.12.0
+~~~~~~
+
+- `jwkvam <https://github.com/jwkvam>`_ added progress output during linting.
+
 0.11.0
 ~~~~~~
 
@@ -58,7 +63,7 @@ Releases
 0.10.0
 ~~~~~~
 
-- `jqkvan <https://github.com/jwkvam>`_ provided support for pylint 2.0
+- `jwkvam <https://github.com/jwkvam>`_ provided support for pylint 2.0
 
 0.9.0
 ~~~~~

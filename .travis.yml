@@ -5,7 +5,7 @@ python:
   - "3.5"
   - "3.6"
 install:
-  - "pip install tox-travis tox coveralls"
+  - "pip install tox-travis tox==3.0.0 coveralls"
   - "pip install -e ."
 script: tox
 after_success:
