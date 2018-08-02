@@ -137,21 +137,22 @@ def pytest_sessionstart(session):
 
 def pytest_collect_file(path, parent):
     """Collect files on which pylint should run"""
-    config = parent.config
+    config = parent.session.config
     if not config.option.pylint or config.option.no_pylint:
         return None
     if path.ext != ".py":
         return None
-    rel_path = get_rel_path(path.strpath, parent.fspath.strpath)
-    if parent.pylint_config is None:
-        parent.pylint_files.add(rel_path)
+    rel_path = get_rel_path(path.strpath, parent.session.fspath.strpath)
+    session = parent.session
+    if session.pylint_config is None:
+        session.pylint_files.add(rel_path)
         # No pylintrc, therefore no ignores, so return the item.
         return PyLintItem(path, parent)
 
-    if not any(basename in rel_path for basename in parent.pylint_ignore):
-        parent.pylint_files.add(rel_path)
+    if not any(basename in rel_path for basename in session.pylint_ignore):
+        session.pylint_files.add(rel_path)
         return PyLintItem(
-            path, parent, parent.pylint_msg_template, parent.pylintrc_file
+            path, parent, session.pylint_msg_template, session.pylintrc_file
         )
     return None
 
