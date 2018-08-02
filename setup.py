@@ -13,7 +13,7 @@ setup(
     description='pytest plugin to check source code with pylint',
     long_description=open("README.rst").read(),
     license='MIT',
-    version='0.12.0',
+    version='0.12.1',
     author='Carson Gee',
     author_email='x@carsongee.com',
     url='https://github.com/carsongee/pytest-pylint',
@@ -28,5 +28,6 @@ setup(
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
     ],
 )

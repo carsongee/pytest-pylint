@@ -49,6 +49,11 @@ This code is heavily based on
 Releases
 ========
 
+0.12.1
+~~~~~~
+
+- Corrected a bug preventing this plugin from working with py.test >= 3.7.0.
+
 0.12.0
 ~~~~~~
 
