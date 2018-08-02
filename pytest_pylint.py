@@ -100,15 +100,14 @@ def pytest_addoption(parser):
     )
 
 
-def pytest_sessionstart(session):
+def pytest_sessionstart(config):
     """Storing pylint settings on the session"""
-    session.pylint_files = set()
-    session.pylint_messages = {}
-    session.pylint_config = None
-    session.pylintrc_file = None
-    session.pylint_ignore = []
-    session.pylint_msg_template = None
-    config = session.config
+    config.pylint_files = set()
+    config.pylint_messages = {}
+    config.pylint_config = None
+    config.pylintrc_file = None
+    config.pylint_ignore = []
+    config.pylint_msg_template = None
 
     # Find pylintrc to check ignore list
     pylintrc_file = config.option.pylint_rcfile or PYLINTRC
@@ -118,17 +117,17 @@ def pytest_sessionstart(session):
         pylintrc_file = join(dirname(str(config.inifile)), pylintrc_file)
 
     if pylintrc_file and exists(pylintrc_file):
-        session.pylintrc_file = pylintrc_file
-        session.pylint_config = ConfigParser()
-        session.pylint_config.read(pylintrc_file)
+        config.pylintrc_file = pylintrc_file
+        config.pylint_config = ConfigParser()
+        config.pylint_config.read(pylintrc_file)
         try:
-            ignore_string = session.pylint_config.get('MASTER', 'ignore')
+            ignore_string = config.pylint_config.get('MASTER', 'ignore')
             if ignore_string:
-                session.pylint_ignore = ignore_string.split(',')
+                config.pylint_ignore = ignore_string.split(',')
         except (NoSectionError, NoOptionError):
             pass
         try:
-            session.pylint_msg_template = session.pylint_config.get(
+            config.pylint_msg_template = config.pylint_config.get(
                 'REPORTS', 'msg-template'
             )
         except (NoSectionError, NoOptionError):
@@ -156,18 +155,18 @@ def pytest_collect_file(path, parent):
     return None
 
 
-def pytest_collection_finish(session):
+def pytest_collection_finish(config):
     """Lint collected files and store messages on session."""
-    if not session.pylint_files:
+    if not config.pylint_files:
         return
 
-    jobs = session.config.option.pylint_jobs
+    jobs = config.option.pylint_jobs
     reporter = ProgrammaticReporter()
     # Build argument list for pylint
-    args_list = list(session.pylint_files)
-    if session.pylintrc_file:
+    args_list = list(config.pylint_files)
+    if config.pylintrc_file:
         args_list.append('--rcfile={0}'.format(
-            session.pylintrc_file
+            config.pylintrc_file
         ))
     if jobs is not None:
         args_list.append('-j')
@@ -185,9 +184,9 @@ def pytest_collection_finish(session):
     messages = result.linter.reporter.data
     # Stores the messages in a dictionary for lookup in tests.
     for message in messages:
-        if message.path not in session.pylint_messages:
-            session.pylint_messages[message.path] = []
-        session.pylint_messages[message.path].append(message)
+        if message.path not in config.pylint_messages:
+            config.pylint_messages[message.path] = []
+        config.pylint_messages[message.path].append(message)
     print('-' * 65)
 
 
@@ -213,7 +212,7 @@ class PyLintItem(pytest.Item, pytest.File):
     def runtest(self):
         """Check the pylint messages to see if any errors were reported."""
         reported_errors = []
-        for error in self.session.pylint_messages.get(self.rel_path, []):
+        for error in self.config.pylint_messages.get(self.rel_path, []):
             if error.C in self.config.option.pylint_error_types:
                 reported_errors.append(
                     error.format(self._msg_format)
