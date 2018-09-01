@@ -202,7 +202,10 @@ class PyLintItem(pytest.Item, pytest.File):
         super(PyLintItem, self).__init__(fspath, parent)
 
         self.add_marker("pylint")
-        self.rel_path = get_rel_path(fspath.strpath, parent.fspath.strpath)
+        self.rel_path = get_rel_path(
+            fspath.strpath,
+            parent.session.fspath.strpath
+        )
 
         if msg_format is None:
             self._msg_format = '{C}:{line:3d},{column:2d}: {msg} ({symbol})'
