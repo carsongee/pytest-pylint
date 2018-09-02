@@ -19,6 +19,20 @@ def test_basic(testdir):
     assert 'Linting files' in result.stdout.str()
 
 
+def test_subdirectories(testdir):
+    """Verify pylint checks files in subdirectories"""
+    subdir = testdir.mkpydir('mymodule')
+    testfile = subdir.join("test_file.py")
+    testfile.write("""import sys""")
+    result = testdir.runpytest('--pylint')
+    assert '[pylint] mymodule/test_file.py' in result.stdout.str()
+    assert 'Missing module docstring' in result.stdout.str()
+    assert 'Unused import sys' in result.stdout.str()
+    assert 'Final newline missing' in result.stdout.str()
+    assert '1 failed' in result.stdout.str()
+    assert 'Linting files' in result.stdout.str()
+
+
 def test_disable(testdir):
     """Verify basic pylint checks"""
     testdir.makepyfile("""import sys""")
