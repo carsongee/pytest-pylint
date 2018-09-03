@@ -49,6 +49,13 @@ This code is heavily based on
 Releases
 ========
 
+0.12.2
+~~~~~~
+
+- Resolved issue where failing files weren't reported thanks to reports from
+  `skirpichev <https://github.com/skirpichev>`_ and `jamur2 <https://github.com/jamur2>`_
+
+
 0.12.1
 ~~~~~~
 
