@@ -49,6 +49,12 @@ This code is heavily based on
 Releases
 ========
 
+0.12.3
+~~~~~~
+
+- `jamur2 <https://github.com/jamur2>`_ corrected issue where file
+  paths where not being output properly on lint failures.
+
 0.12.2
 ~~~~~~
 
