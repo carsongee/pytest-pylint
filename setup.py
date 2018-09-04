@@ -20,6 +20,8 @@ setup(
     py_modules=['pytest_pylint'],
     entry_points={'pytest11': ['pylint = pytest_pylint']},
     install_requires=['pytest>=2.7', 'pylint>=1.4.5', 'six'],
+    setup_requires=['pytest-runner'],
+    tests_require=['mock', 'coverage', 'pytest-pep8'],
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
