@@ -135,6 +135,11 @@ def pytest_sessionstart(session):
             pass
 
 
+def include_file(path, ignore_list):
+    """Checks if a file should be included in the collection."""
+    return not any(basename in path for basename in ignore_list)
+
+
 def pytest_collect_file(path, parent):
     """Collect files on which pylint should run"""
     config = parent.session.config
@@ -149,7 +154,7 @@ def pytest_collect_file(path, parent):
         # No pylintrc, therefore no ignores, so return the item.
         return PyLintItem(path, parent)
 
-    if not any(basename in rel_path for basename in session.pylint_ignore):
+    if include_file(rel_path, session.pylint_ignore):
         session.pylint_files.add(rel_path)
         return PyLintItem(
             path, parent, session.pylint_msg_template, session.pylintrc_file
