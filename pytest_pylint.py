@@ -137,7 +137,8 @@ def pytest_sessionstart(session):
 
 def include_file(path, ignore_list):
     """Checks if a file should be included in the collection."""
-    return not any(basename in path for basename in ignore_list)
+    parts = path.split(sep)
+    return not set(parts) & set(ignore_list)
 
 
 def pytest_collect_file(path, parent):
