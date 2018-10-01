@@ -15,7 +15,8 @@ def test_basic(testdir):
     assert 'Missing module docstring' in result.stdout.str()
     assert 'Unused import sys' in result.stdout.str()
     assert 'Final newline missing' in result.stdout.str()
-    assert 'passed' not in result.stdout.str()
+    assert 'passed, ' not in result.stdout.str()
+    assert '1 failed' in result.stdout.str()
     assert 'Linting files' in result.stdout.str()
 
 
