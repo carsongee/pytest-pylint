@@ -1,7 +1,7 @@
 pytest pylint
 -------------
 .. image:: https://img.shields.io/travis/carsongee/pytest-pylint.svg
-    :target: https://travis-ci.org/carsongee/orcoursetrion
+    :target: https://travis-ci.org/carsongee/pytest-pylint
 .. image:: https://img.shields.io/coveralls/carsongee/pytest-pylint.svg
     :target: https://coveralls.io/r/carsongee/pytest-pylint
 .. image:: https://img.shields.io/pypi/v/pytest-pylint.svg
