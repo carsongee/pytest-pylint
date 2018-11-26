@@ -1,7 +1,7 @@
 pytest pylint
 -------------
 .. image:: https://img.shields.io/travis/carsongee/pytest-pylint.svg
-    :target: https://travis-ci.org/carsongee/orcoursetrion
+    :target: https://travis-ci.org/carsongee/pytest-pylint
 .. image:: https://img.shields.io/coveralls/carsongee/pytest-pylint.svg
     :target: https://coveralls.io/r/carsongee/pytest-pylint
 .. image:: https://img.shields.io/pypi/v/pytest-pylint.svg
@@ -48,6 +48,13 @@ This code is heavily based on
 
 Releases
 ========
+
+0.13.0
+~~~~~~
+
+- Python 3.7 compatibility verified
+- Ignore paths no longer match partial names thanks to `heoga
+  <https://github.com/heoga>`_
 
 0.12.3
 ~~~~~~

@@ -15,7 +15,8 @@ def test_basic(testdir):
     assert 'Missing module docstring' in result.stdout.str()
     assert 'Unused import sys' in result.stdout.str()
     assert 'Final newline missing' in result.stdout.str()
-    assert 'passed' not in result.stdout.str()
+    assert 'passed, ' not in result.stdout.str()
+    assert '1 failed' in result.stdout.str()
     assert 'Linting files' in result.stdout.str()
 
 
@@ -160,3 +161,29 @@ def test_no_multiple_jobs(testdir):
         testdir.runpytest('--pylint')
     assert run_mock.call_count == 1
     assert '-j' not in run_mock.call_args[0][0]
+
+
+def test_include_path():
+    """
+    Files should only be included in the list if none of the directories on
+    it's path, of the filename, match an entry in the ignore list.
+    """
+    from pytest_pylint import include_file
+    ignore_list = [
+        "first", "second", "third", "part", "base.py"
+    ]
+    # Default includes.
+    assert include_file("random", ignore_list) is True
+    assert include_file("random/filename", ignore_list) is True
+    assert include_file("random/other/filename", ignore_list) is True
+    # Basic ignore matches.
+    assert include_file("first/filename", ignore_list) is False
+    assert include_file("random/base.py", ignore_list) is False
+    # Part on paths.
+    assert include_file("part/second/filename.py", ignore_list) is False
+    assert include_file("random/part/filename.py", ignore_list) is False
+    assert include_file("random/second/part.py", ignore_list) is False
+    # Part as substring on paths.
+    assert include_file("part_it/other/filename.py", ignore_list) is True
+    assert include_file("random/part_it/filename.py", ignore_list) is True
+    assert include_file("random/other/part_it.py", ignore_list) is True
