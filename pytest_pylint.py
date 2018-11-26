@@ -1,7 +1,5 @@
 """Pylint plugin for py.test"""
-from __future__ import unicode_literals
-from __future__ import absolute_import
-from __future__ import print_function
+from __future__ import absolute_import, print_function, unicode_literals
 from os import sep
 from os.path import exists, join, dirname
 import sys
@@ -20,7 +18,6 @@ import pytest
 
 class PyLintException(Exception):
     """Exception to raise if a file has a specified pylint error"""
-    pass
 
 
 class ProgrammaticReporter(BaseReporter):
@@ -203,7 +200,7 @@ class PyLintItem(pytest.Item, pytest.File):
     # pylint doesn't deal well with dynamic modules and there isn't an
     # astng plugin for pylint in pypi yet, so we'll have to disable
     # the checks.
-    # pylint: disable=no-member,super-on-old-class,abstract-method
+    # pylint: disable=no-member,abstract-method
     def __init__(self, fspath, parent, msg_format=None, pylintrc_file=None):
         super(PyLintItem, self).__init__(fspath, parent)
 
