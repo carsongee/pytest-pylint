@@ -49,6 +49,13 @@ This code is heavily based on
 Releases
 ========
 
+0.13.0
+~~~~~~
+
+- Python 3.7 compatibility verified
+- Ignore paths no longer match partial names thanks to `heoga
+  <https://github.com/heoga>`_
+
 0.12.3
 ~~~~~~
 
