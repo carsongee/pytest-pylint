@@ -189,7 +189,7 @@ def test_include_path():
     assert include_file("random/other/part_it.py", ignore_list) is True
 
 
-def test_include_path_with_ignore_patterns():
+def test_pylint_ignore_patterns():
     """Test if the ignore-patterns is working"""
     from pytest_pylint import include_file
     ignore_patterns = [
