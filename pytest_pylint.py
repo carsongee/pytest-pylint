@@ -166,7 +166,8 @@ def pytest_collect_file(path, parent):
         # No pylintrc, therefore no ignores, so return the item.
         return PyLintItem(path, parent)
 
-    if include_file(rel_path, session.pylint_ignore, session.pylint_ignore_patterns):
+    if include_file(rel_path, session.pylint_ignore,
+                    session.pylint_ignore_patterns):
         session.pylint_files.add(rel_path)
         return PyLintItem(
             path, parent, session.pylint_msg_template, session.pylintrc_file
