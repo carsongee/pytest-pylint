@@ -16,6 +16,8 @@ from pylint.interfaces import IReporter
 from pylint.reporters import BaseReporter
 import pytest
 
+HISTKEY = 'pylint/mtimes'
+
 
 class PyLintException(Exception):
     """Exception to raise if a file has a specified pylint error"""
@@ -152,6 +154,35 @@ def include_file(path, ignore_list, ignore_patterns=None):
     return not set(parts) & set(ignore_list)
 
 
+def pytest_configure(config):
+    """
+    Add a plugin to cache file mtimes.
+
+    :param _pytest.config.Config config: pytest config object
+    """
+    if config.option.pylint:
+        config.pylint = PylintPlugin(config)
+        config.pluginmanager.register(config.pylint)
+    config.addinivalue_line('markers', "pylint: Tests which run pylint.")
+
+
+# pylint: disable=too-few-public-methods
+class PylintPlugin:
+    """
+    A Plugin object for pylint, which loads and records file mtimes.
+    """
+    def __init__(self, config):
+        self.mtimes = config.cache.get(HISTKEY, {})
+
+    def pytest_sessionfinish(self, session):
+        """
+        Save file mtimes to pytest cache.
+
+        :param _pytest.main.Session session: the pytest session object
+        """
+        session.config.cache.set(HISTKEY, self.mtimes)
+
+
 def pytest_collect_file(path, parent):
     """Collect files on which pylint should run"""
     config = parent.session.config
@@ -231,6 +262,13 @@ class PyLintItem(pytest.Item, pytest.File):
             self._msg_format = msg_format
 
         self.pylintrc_file = pylintrc_file
+        self.__mtime = self.fspath.mtime()
+
+    def setup(self):
+        """Mark unchanged files as SKIPPED."""
+        previous = self.config.pylint.mtimes.get(self.nodeid, 0)
+        if previous == self.__mtime:
+            pytest.skip("file(s) previously passed pylint checks")
 
     def runtest(self):
         """Check the pylint messages to see if any errors were reported."""
@@ -242,6 +280,9 @@ class PyLintItem(pytest.Item, pytest.File):
                 )
         if reported_errors:
             raise PyLintException('\n'.join(reported_errors))
+
+        # Update the cache if the item passed pylint.
+        self.config.pylint.mtimes[self.nodeid] = self.__mtime
 
     def repr_failure(self, excinfo):
         """Handle any test failures by checkint that they were ours."""
