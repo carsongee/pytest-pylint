@@ -166,8 +166,8 @@ def pytest_configure(config):
     config.addinivalue_line('markers', "pylint: Tests which run pylint.")
 
 
-# pylint: disable=too-few-public-methods
-class PylintPlugin:
+# pylint: disable=too-few-public-methods, useless-object-inheritance
+class PylintPlugin(object):
     """
     A Plugin object for pylint, which loads and records file mtimes.
     """

@@ -223,20 +223,18 @@ def test_skip_checked_files(testdir):
     Test a file twice which can pass pylint.
     The 2nd time should be skipped.
     """
-    testdir.makepyfile('''#!/usr/bin/env python
-"""A hello world script."""
-
-from __future__ import print_function
-
-print('Hello world!')
-# pylint: disable=missing-final-newline
-''')
+    testdir.makepyfile(
+        '#!/usr/bin/env python',
+        '"""A hello world script."""',
+        '',
+        'from __future__ import print_function',
+        '',
+        'print("Hello world!")  # pylint: disable=missing-final-newline',
+    )
     # The 1st time should be passed
     result = testdir.runpytest('--pylint')
-    print(result.stdout.str())
     assert '1 passed' in result.stdout.str()
 
     # The 2nd time should be skipped
     result = testdir.runpytest('--pylint')
-    print(result.stdout.str())
     assert '1 skipped' in result.stdout.str()
