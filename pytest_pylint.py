@@ -166,6 +166,11 @@ def pytest_configure(config):
     config.addinivalue_line('markers', "pylint: Tests which run pylint.")
 
 
+# There will be an old-style-class error in Python 2.7,
+# or a useless-object-inheritance warning in Python 3.
+# If disable any, pylint will have a bad-option-value error in 2.7 or 3.
+# Finally I have to disable useless-object-inheritance locally
+# and bad-option-value globally.
 # pylint: disable=too-few-public-methods, useless-object-inheritance
 class PylintPlugin(object):
     """
