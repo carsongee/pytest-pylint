@@ -1,5 +1,6 @@
 """Pylint plugin for py.test"""
 from __future__ import absolute_import, print_function, unicode_literals
+import re
 from os import sep
 from os.path import exists, join, dirname
 import sys
@@ -104,6 +105,7 @@ def pytest_sessionstart(session):
     session.pylint_config = None
     session.pylintrc_file = None
     session.pylint_ignore = []
+    session.pylint_ignore_patterns = []
     session.pylint_msg_template = None
     config = session.config
 
@@ -118,12 +120,20 @@ def pytest_sessionstart(session):
         session.pylintrc_file = pylintrc_file
         session.pylint_config = ConfigParser()
         session.pylint_config.read(pylintrc_file)
+
         try:
             ignore_string = session.pylint_config.get('MASTER', 'ignore')
             if ignore_string:
                 session.pylint_ignore = ignore_string.split(',')
         except (NoSectionError, NoOptionError):
             pass
+
+        try:
+            session.pylint_ignore_patterns = session.pylint_config.get(
+                'MASTER', 'ignore-patterns')
+        except (NoSectionError, NoOptionError):
+            pass
+
         try:
             session.pylint_msg_template = session.pylint_config.get(
                 'REPORTS', 'msg-template'
@@ -132,8 +142,12 @@ def pytest_sessionstart(session):
             pass
 
 
-def include_file(path, ignore_list):
+def include_file(path, ignore_list, ignore_patterns=None):
     """Checks if a file should be included in the collection."""
+    if ignore_patterns:
+        for pattern in ignore_patterns:
+            if re.match(pattern, path):
+                return False
     parts = path.split(sep)
     return not set(parts) & set(ignore_list)
 
@@ -152,7 +166,8 @@ def pytest_collect_file(path, parent):
         # No pylintrc, therefore no ignores, so return the item.
         return PyLintItem(path, parent)
 
-    if include_file(rel_path, session.pylint_ignore):
+    if include_file(rel_path, session.pylint_ignore,
+                    session.pylint_ignore_patterns):
         session.pylint_files.add(rel_path)
         return PyLintItem(
             path, parent, session.pylint_msg_template, session.pylintrc_file
