@@ -198,17 +198,18 @@ def pytest_collect_file(path, parent):
     rel_path = get_rel_path(path.strpath, parent.session.fspath.strpath)
     session = parent.session
     if session.pylint_config is None:
-        session.pylint_files.add(rel_path)
         # No pylintrc, therefore no ignores, so return the item.
-        return PyLintItem(path, parent)
-
-    if include_file(rel_path, session.pylint_ignore,
-                    session.pylint_ignore_patterns):
-        session.pylint_files.add(rel_path)
-        return PyLintItem(
+        item = PyLintItem(path, parent)
+    elif include_file(rel_path, session.pylint_ignore,
+                      session.pylint_ignore_patterns):
+        item = PyLintItem(
             path, parent, session.pylint_msg_template, session.pylintrc_file
         )
-    return None
+    else:
+        return None
+    if not item.should_skip:
+        session.pylint_files.add(rel_path)
+    return item
 
 
 def pytest_collection_finish(session):
@@ -268,11 +269,12 @@ class PyLintItem(pytest.Item, pytest.File):
 
         self.pylintrc_file = pylintrc_file
         self.__mtime = self.fspath.mtime()
+        prev_mtime = self.config.pylint.mtimes.get(self.nodeid, 0)
+        self.should_skip = (prev_mtime == self.__mtime)
 
     def setup(self):
         """Mark unchanged files as SKIPPED."""
-        previous = self.config.pylint.mtimes.get(self.nodeid, 0)
-        if previous == self.__mtime:
+        if self.should_skip:
             pytest.skip("file(s) previously passed pylint checks")
 
     def runtest(self):
