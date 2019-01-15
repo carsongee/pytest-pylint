@@ -1,3 +1,8 @@
 [TYPECHECK]
-ignored-classes=pytest
-disable=bad-option-value
+
+ignored-classes = pytest
+
+
+[MESSAGES CONTROL]
+
+disable = useless-object-inheritance
