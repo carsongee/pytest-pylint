@@ -1,2 +1,8 @@
 [TYPECHECK]
-ignored-classes=pytest
+
+ignored-classes = pytest
+
+
+[MESSAGES CONTROL]
+
+disable = useless-object-inheritance

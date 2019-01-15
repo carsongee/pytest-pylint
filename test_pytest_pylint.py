@@ -187,3 +187,54 @@ def test_include_path():
     assert include_file("part_it/other/filename.py", ignore_list) is True
     assert include_file("random/part_it/filename.py", ignore_list) is True
     assert include_file("random/other/part_it.py", ignore_list) is True
+
+
+def test_pylint_ignore_patterns():
+    """Test if the ignore-patterns is working"""
+    from pytest_pylint import include_file
+    ignore_patterns = [
+        "first.*",
+        ".*second",
+        "^third.*fourth$",
+        "part",
+        "base.py"
+    ]
+
+    # Default includes
+    assert include_file("random", [], ignore_patterns) is True
+    assert include_file("random/filename", [], ignore_patterns) is True
+    assert include_file("random/other/filename", [], ignore_patterns) is True
+
+    # Pattern matches
+    assert include_file("first1", [], ignore_patterns) is False
+    assert include_file("first", [], ignore_patterns) is False
+    assert include_file("_second", [], ignore_patterns) is False
+    assert include_file("second_", [], ignore_patterns) is False
+    assert include_file("second_", [], ignore_patterns) is False
+    assert include_file("third fourth", [], ignore_patterns) is False
+    assert include_file("_third fourth_", [], ignore_patterns) is True
+    assert include_file("part", [], ignore_patterns) is False
+    assert include_file("1part2", [], ignore_patterns) is True
+    assert include_file("base.py", [], ignore_patterns) is False
+
+
+def test_skip_checked_files(testdir):
+    """
+    Test a file twice which can pass pylint.
+    The 2nd time should be skipped.
+    """
+    testdir.makepyfile(
+        '#!/usr/bin/env python',
+        '"""A hello world script."""',
+        '',
+        'from __future__ import print_function',
+        '',
+        'print("Hello world!")  # pylint: disable=missing-final-newline',
+    )
+    # The 1st time should be passed
+    result = testdir.runpytest('--pylint')
+    assert '1 passed' in result.stdout.str()
+
+    # The 2nd time should be skipped
+    result = testdir.runpytest('--pylint')
+    assert '1 skipped' in result.stdout.str()

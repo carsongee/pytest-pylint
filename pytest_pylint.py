@@ -1,5 +1,6 @@
 """Pylint plugin for py.test"""
 from __future__ import absolute_import, print_function, unicode_literals
+import re
 from os import sep
 from os.path import exists, join, dirname
 import sys
@@ -14,6 +15,8 @@ from pylint.config import PYLINTRC
 from pylint.interfaces import IReporter
 from pylint.reporters import BaseReporter
 import pytest
+
+HISTKEY = 'pylint/mtimes'
 
 
 class PyLintException(Exception):
@@ -104,6 +107,7 @@ def pytest_sessionstart(session):
     session.pylint_config = None
     session.pylintrc_file = None
     session.pylint_ignore = []
+    session.pylint_ignore_patterns = []
     session.pylint_msg_template = None
     config = session.config
 
@@ -118,12 +122,20 @@ def pytest_sessionstart(session):
         session.pylintrc_file = pylintrc_file
         session.pylint_config = ConfigParser()
         session.pylint_config.read(pylintrc_file)
+
         try:
             ignore_string = session.pylint_config.get('MASTER', 'ignore')
             if ignore_string:
                 session.pylint_ignore = ignore_string.split(',')
         except (NoSectionError, NoOptionError):
             pass
+
+        try:
+            session.pylint_ignore_patterns = session.pylint_config.get(
+                'MASTER', 'ignore-patterns')
+        except (NoSectionError, NoOptionError):
+            pass
+
         try:
             session.pylint_msg_template = session.pylint_config.get(
                 'REPORTS', 'msg-template'
@@ -132,10 +144,44 @@ def pytest_sessionstart(session):
             pass
 
 
-def include_file(path, ignore_list):
+def include_file(path, ignore_list, ignore_patterns=None):
     """Checks if a file should be included in the collection."""
+    if ignore_patterns:
+        for pattern in ignore_patterns:
+            if re.match(pattern, path):
+                return False
     parts = path.split(sep)
     return not set(parts) & set(ignore_list)
+
+
+def pytest_configure(config):
+    """
+    Add a plugin to cache file mtimes.
+
+    :param _pytest.config.Config config: pytest config object
+    """
+    if config.option.pylint:
+        config.pylint = PylintPlugin(config)
+        config.pluginmanager.register(config.pylint)
+    config.addinivalue_line('markers', "pylint: Tests which run pylint.")
+
+
+class PylintPlugin(object):
+    """
+    A Plugin object for pylint, which loads and records file mtimes.
+    """
+    # pylint: disable=too-few-public-methods
+
+    def __init__(self, config):
+        self.mtimes = config.cache.get(HISTKEY, {})
+
+    def pytest_sessionfinish(self, session):
+        """
+        Save file mtimes to pytest cache.
+
+        :param _pytest.main.Session session: the pytest session object
+        """
+        session.config.cache.set(HISTKEY, self.mtimes)
 
 
 def pytest_collect_file(path, parent):
@@ -148,16 +194,18 @@ def pytest_collect_file(path, parent):
     rel_path = get_rel_path(path.strpath, parent.session.fspath.strpath)
     session = parent.session
     if session.pylint_config is None:
-        session.pylint_files.add(rel_path)
         # No pylintrc, therefore no ignores, so return the item.
-        return PyLintItem(path, parent)
-
-    if include_file(rel_path, session.pylint_ignore):
-        session.pylint_files.add(rel_path)
-        return PyLintItem(
+        item = PyLintItem(path, parent)
+    elif include_file(rel_path, session.pylint_ignore,
+                      session.pylint_ignore_patterns):
+        item = PyLintItem(
             path, parent, session.pylint_msg_template, session.pylintrc_file
         )
-    return None
+    else:
+        return None
+    if not item.should_skip:
+        session.pylint_files.add(rel_path)
+    return item
 
 
 def pytest_collection_finish(session):
@@ -216,6 +264,14 @@ class PyLintItem(pytest.Item, pytest.File):
             self._msg_format = msg_format
 
         self.pylintrc_file = pylintrc_file
+        self.__mtime = self.fspath.mtime()
+        prev_mtime = self.config.pylint.mtimes.get(self.nodeid, 0)
+        self.should_skip = (prev_mtime == self.__mtime)
+
+    def setup(self):
+        """Mark unchanged files as SKIPPED."""
+        if self.should_skip:
+            pytest.skip("file(s) previously passed pylint checks")
 
     def runtest(self):
         """Check the pylint messages to see if any errors were reported."""
@@ -227,6 +283,9 @@ class PyLintItem(pytest.Item, pytest.File):
                 )
         if reported_errors:
             raise PyLintException('\n'.join(reported_errors))
+
+        # Update the cache if the item passed pylint.
+        self.config.pylint.mtimes[self.nodeid] = self.__mtime
 
     def repr_failure(self, excinfo):
         """Handle any test failures by checkint that they were ours."""
