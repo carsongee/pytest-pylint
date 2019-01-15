@@ -49,6 +49,15 @@ This code is heavily based on
 Releases
 ========
 
+0.14.0
+~~~~~~
+
+- Added support for Pylint's ignore-patterns for regex based ignores
+  thanks to `khokhlin <https://github.com/khokhlin>`_
+- pytest-pylint now caches successful pylint checks to speedup test
+  reruns when files haven't changed thanks to `yanqd0
+  <https://github.com/yanqd0>`_
+
 0.13.0
 ~~~~~~
 
