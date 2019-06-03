@@ -51,6 +51,16 @@ def pytest_addoption(parser):
         default=None,
         help='Path to a file where Pylint report will be printed to.'
     )
+    group.addoption(
+        '--pylint-ignore',
+        default=None,
+        help='Files/directories that will be ignored'
+    )
+    group.addoption(
+        '--pylint-ignore-patterns',
+        default=None,
+        help='Files/directories patterns that will be ignored'
+    )
 
 
 def pytest_configure(config):
@@ -113,7 +123,8 @@ class PylintPlugin:
 
                 try:
                     self.pylint_ignore_patterns = self.pylint_config.get(
-                        'MASTER', 'ignore-patterns')
+                        'MASTER', 'ignore-patterns'
+                    ).split(',')
                 except (NoSectionError, NoOptionError):
                     pass
 
@@ -123,6 +134,13 @@ class PylintPlugin:
                     )
                 except (NoSectionError, NoOptionError):
                     pass
+
+        # Command line arguments take presedence over rcfile ones if set
+        if config.option.pylint_ignore is not None:
+            self.pylint_ignore = config.option.pylint_ignore.split(',')
+        if config.option.pylint_ignore_patterns is not None:
+            self.pylint_ignore_patterns =\
+                config.option.pylint_ignore_patterns.split(',')
 
     def _load_pyproject_toml(self, pylintrc_file):
         with open(pylintrc_file, "r") as f_p:
@@ -168,10 +186,7 @@ class PylintPlugin:
             return None
 
         rel_path = get_rel_path(path.strpath, parent.session.fspath.strpath)
-        if self.pylint_config is None:
-            # No pylintrc, therefore no ignores, so return the item.
-            item = PyLintItem(path, parent, pylint_plugin=self)
-        elif should_include_file(
+        if should_include_file(
                 rel_path, self.pylint_ignore, self.pylint_ignore_patterns
         ):
             item = PyLintItem(path, parent, pylint_plugin=self)
