@@ -49,6 +49,12 @@ This code is heavily based on
 Releases
 ========
 
+0.14.1
+~~~~~~
+
+- Corrected pytest-pylint to properly support ``-p no:cacheprovider``
+  thanks to `yanqd0 <https://github.com/yanqd0>`_
+
 0.14.0
 ~~~~~~
 
