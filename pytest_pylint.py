@@ -173,7 +173,10 @@ class PylintPlugin(object):
     # pylint: disable=too-few-public-methods
 
     def __init__(self, config):
-        self.mtimes = config.cache.get(HISTKEY, {})
+        if hasattr(config, 'cache'):
+            self.mtimes = config.cache.get(HISTKEY, {})
+        else:
+            self.mtimes = {}
 
     def pytest_sessionfinish(self, session):
         """
@@ -181,7 +184,8 @@ class PylintPlugin(object):
 
         :param _pytest.main.Session session: the pytest session object
         """
-        session.config.cache.set(HISTKEY, self.mtimes)
+        if hasattr(session.config, 'cache'):
+            session.config.cache.set(HISTKEY, self.mtimes)
 
 
 def pytest_collect_file(path, parent):
@@ -234,6 +238,8 @@ def pytest_collection_finish(session):
         result = lint.Run(args_list, reporter=reporter, exit=False)
     except TypeError:  # Handle pylint 2.0 API
         result = lint.Run(args_list, reporter=reporter, do_exit=False)
+    except RuntimeError:
+        return
     messages = result.linter.reporter.data
     # Stores the messages in a dictionary for lookup in tests.
     for message in messages:
