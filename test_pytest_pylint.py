@@ -238,3 +238,7 @@ def test_skip_checked_files(testdir):
     # The 2nd time should be skipped
     result = testdir.runpytest('--pylint')
     assert '1 skipped' in result.stdout.str()
+
+    # Always be passed when cacheprovider disabled
+    result = testdir.runpytest('--pylint', '-p', 'no:cacheprovider')
+    assert '1 passed' in result.stdout.str()
