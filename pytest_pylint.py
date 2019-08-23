@@ -98,6 +98,11 @@ def pytest_addoption(parser):
         default=None,
         help='Specify number of processes to use for pylint'
     )
+    group.addoption(
+        '--pylint-output-file',
+        default=None,
+        help='Path to a file where Pylint report will be printed to.'
+    )
 
 
 def pytest_sessionstart(session):
@@ -110,6 +115,9 @@ def pytest_sessionstart(session):
     session.pylint_ignore_patterns = []
     session.pylint_msg_template = None
     config = session.config
+
+    # Set file to output linting error messages.
+    # session.pylint_output_file = config.option.pylint_output_file
 
     # Find pylintrc to check ignore list
     pylintrc_file = config.option.pylint_rcfile or PYLINTRC
@@ -281,12 +289,21 @@ class PyLintItem(pytest.Item, pytest.File):
 
     def runtest(self):
         """Check the pylint messages to see if any errors were reported."""
+        pylint_output_file = self.config.option.pylint_output_file
         reported_errors = []
         for error in self.session.pylint_messages.get(self.rel_path, []):
             if error.C in self.config.option.pylint_error_types:
                 reported_errors.append(
                     error.format(self._msg_format)
                 )
+
+                if pylint_output_file:
+                    with open(pylint_output_file, 'a') as file:
+                        file.write(
+                            f'{error.path}:{error.line}: [{error.msg_id}'
+                            f'({error.symbol}), {error.obj}] {error.msg}\n'
+                        )
+
         if reported_errors:
             raise PyLintException('\n'.join(reported_errors))
 

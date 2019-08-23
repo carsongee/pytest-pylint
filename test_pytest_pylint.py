@@ -2,6 +2,8 @@
 """
 Unit testing module for pytest-pylint plugin
 """
+import os
+
 import mock
 
 
@@ -242,3 +244,21 @@ def test_skip_checked_files(testdir):
     # Always be passed when cacheprovider disabled
     result = testdir.runpytest('--pylint', '-p', 'no:cacheprovider')
     assert '1 passed' in result.stdout.str()
+
+
+def test_output_file(testdir):
+    """Verify basic pylint checks"""
+    testdir.makepyfile("""import sys""")
+    testdir.runpytest('--pylint', '--pylint-output-file=pylint.report')
+    output_file = os.path.join(testdir.tmpdir, 'pylint.report')
+    assert os.path.isfile(output_file)
+
+    with open(output_file, 'r') as file:
+        report = file.read()
+
+    assert 'test_output_file.py:1: [C0304(missing-final-newline), ] Final ' \
+           'newline missing' in report
+    assert 'test_output_file.py:1: [C0111(missing-docstring), ] Missing ' \
+           'module docstring' in report
+    assert 'test_output_file.py:1: [W0611(unused-import), ] Unused import ' \
+           'sys' in report
