@@ -250,7 +250,7 @@ def test_output_file(testdir):
     """Verify basic pylint checks"""
     testdir.makepyfile("""import sys""")
     testdir.runpytest('--pylint', '--pylint-output-file=pylint.report')
-    output_file = os.path.join(testdir.tmpdir, 'pylint.report')
+    output_file = os.path.join(testdir.tmpdir.strpath, 'pylint.report')
     assert os.path.isfile(output_file)
 
     with open(output_file, 'r') as file:
