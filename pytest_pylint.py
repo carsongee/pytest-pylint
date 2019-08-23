@@ -315,7 +315,7 @@ class PyLintItem(pytest.Item, pytest.File):
         # Update the cache if the item passed pylint.
         self.config.pylint.mtimes[self.nodeid] = self.__mtime
 
-    def repr_failure(self, excinfo):
+    def repr_failure(self, excinfo, style=None):
         """Handle any test failures by checkint that they were ours."""
         if excinfo.errisinstance(PyLintException):
             return excinfo.value.args[0]
