@@ -116,9 +116,6 @@ def pytest_sessionstart(session):
     session.pylint_msg_template = None
     config = session.config
 
-    # Set file to output linting error messages.
-    # session.pylint_output_file = config.option.pylint_output_file
-
     # Find pylintrc to check ignore list
     pylintrc_file = config.option.pylint_rcfile or PYLINTRC
 
