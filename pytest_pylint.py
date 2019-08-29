@@ -295,8 +295,8 @@ class PyLintItem(pytest.Item, pytest.File):
                 )
 
                 if pylint_output_file:
-                    with open(pylint_output_file, 'a') as file:
-                        file.write(
+                    with open(pylint_output_file, 'a') as _file:
+                        _file.write(
                             '{error_path}:{error_line}: [{error_msg_id}'
                             '({error_symbol}), {error_obj}] '
                             '{error_msg}\n'.format(

@@ -253,8 +253,8 @@ def test_output_file(testdir):
     output_file = os.path.join(testdir.tmpdir.strpath, 'pylint.report')
     assert os.path.isfile(output_file)
 
-    with open(output_file, 'r') as file:
-        report = file.read()
+    with open(output_file, 'r') as _file:
+        report = _file.read()
 
     assert 'test_output_file.py:1: [C0304(missing-final-newline), ] Final ' \
            'newline missing' in report
