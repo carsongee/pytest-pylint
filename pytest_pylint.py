@@ -319,7 +319,7 @@ class PyLintItem(pytest.Item, pytest.File):
         """Handle any test failures by checkint that they were ours."""
         if excinfo.errisinstance(PyLintException):
             return excinfo.value.args[0]
-        return super(PyLintItem, self).repr_failure(excinfo)
+        return super(PyLintItem, self).repr_failure(excinfo, style)
 
     def reportinfo(self):
         """Generate our test report"""
