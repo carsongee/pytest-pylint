@@ -287,27 +287,35 @@ class PyLintItem(pytest.Item, pytest.File):
     def runtest(self):
         """Check the pylint messages to see if any errors were reported."""
         pylint_output_file = self.config.option.pylint_output_file
-        reported_errors = []
-        for error in self.session.pylint_messages.get(self.rel_path, []):
-            if error.C in self.config.option.pylint_error_types:
-                reported_errors.append(
-                    error.format(self._msg_format)
+
+        def _loop_errors(writer):
+            reported_errors = []
+            for error in self.session.pylint_messages.get(self.rel_path, []):
+                if error.C in self.config.option.pylint_error_types:
+                    reported_errors.append(
+                        error.format(self._msg_format)
+                    )
+
+                writer(
+                    '{error_path}:{error_line}: [{error_msg_id}'
+                    '({error_symbol}), {error_obj}] '
+                    '{error_msg}\n'.format(
+                        error_path=error.path,
+                        error_line=error.line,
+                        error_msg_id=error.msg_id,
+                        error_symbol=error.symbol,
+                        error_obj=error.obj,
+                        error_msg=error.msg,
+                    )
                 )
 
-                if pylint_output_file:
-                    with open(pylint_output_file, 'a') as _file:
-                        _file.write(
-                            '{error_path}:{error_line}: [{error_msg_id}'
-                            '({error_symbol}), {error_obj}] '
-                            '{error_msg}\n'.format(
-                                error_path=error.path,
-                                error_line=error.line,
-                                error_msg_id=error.msg_id,
-                                error_symbol=error.symbol,
-                                error_obj=error.obj,
-                                error_msg=error.msg,
-                            )
-                        )
+            return reported_errors
+
+        if pylint_output_file:
+            with open(pylint_output_file, 'a') as _file:
+                reported_errors = _loop_errors(writer=_file.write)
+        else:
+            reported_errors = _loop_errors(writer=lambda *args, **kwargs: None)
 
         if reported_errors:
             raise PyLintException('\n'.join(reported_errors))
