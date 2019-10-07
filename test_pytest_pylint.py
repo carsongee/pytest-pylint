@@ -256,9 +256,17 @@ def test_output_file(testdir):
     with open(output_file, 'r') as _file:
         report = _file.read()
 
-    assert 'test_output_file.py:1: [C0304(missing-final-newline), ] Final ' \
-           'newline missing' in report
-    assert 'test_output_file.py:1: [C0111(missing-docstring), ] Missing ' \
-           'module docstring' in report
-    assert 'test_output_file.py:1: [W0611(unused-import), ] Unused import ' \
-           'sys' in report
+    assert (
+        'test_output_file.py:1: [C0304(missing-final-newline), ] Final '
+        'newline missing'
+    ) in report
+    assert (
+        'test_output_file.py:1: [C0111(missing-docstring), ] Missing '
+        'module docstring'
+    ) in report or (
+        'test_output_file.py:1: [C0114(missing-module-docstring), ] Missing '
+        'module docstring'
+    ) in report
+    assert (
+        'test_output_file.py:1: [W0611(unused-import), ] Unused import sys'
+    ) in report
