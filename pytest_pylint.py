@@ -98,6 +98,11 @@ def pytest_addoption(parser):
         default=None,
         help='Specify number of processes to use for pylint'
     )
+    group.addoption(
+        '--pylint-output-file',
+        default=None,
+        help='Path to a file where Pylint report will be printed to.'
+    )
 
 
 def pytest_sessionstart(session):
@@ -281,23 +286,49 @@ class PyLintItem(pytest.Item, pytest.File):
 
     def runtest(self):
         """Check the pylint messages to see if any errors were reported."""
-        reported_errors = []
-        for error in self.session.pylint_messages.get(self.rel_path, []):
-            if error.C in self.config.option.pylint_error_types:
-                reported_errors.append(
-                    error.format(self._msg_format)
+        pylint_output_file = self.config.option.pylint_output_file
+
+        def _loop_errors(writer):
+            reported_errors = []
+            for error in self.session.pylint_messages.get(self.rel_path, []):
+                if error.C in self.config.option.pylint_error_types:
+                    reported_errors.append(
+                        error.format(self._msg_format)
+                    )
+
+                writer(
+                    '{error_path}:{error_line}: [{error_msg_id}'
+                    '({error_symbol}), {error_obj}] '
+                    '{error_msg}\n'.format(
+                        error_path=error.path,
+                        error_line=error.line,
+                        error_msg_id=error.msg_id,
+                        error_symbol=error.symbol,
+                        error_obj=error.obj,
+                        error_msg=error.msg,
+                    )
                 )
+
+            return reported_errors
+
+        if pylint_output_file:
+            with open(pylint_output_file, 'a') as _file:
+                reported_errors = _loop_errors(writer=_file.write)
+        else:
+            reported_errors = _loop_errors(writer=lambda *args, **kwargs: None)
+
         if reported_errors:
             raise PyLintException('\n'.join(reported_errors))
 
         # Update the cache if the item passed pylint.
         self.config.pylint.mtimes[self.nodeid] = self.__mtime
 
-    def repr_failure(self, excinfo):
+    # pylint: disable=arguments-differ
+    def repr_failure(self, excinfo, style=None):
         """Handle any test failures by checkint that they were ours."""
         if excinfo.errisinstance(PyLintException):
             return excinfo.value.args[0]
-        return super(PyLintItem, self).repr_failure(excinfo)
+        return super(PyLintItem, self).repr_failure(excinfo, style)
 
     def reportinfo(self):
         """Generate our test report"""
