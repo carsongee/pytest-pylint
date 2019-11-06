@@ -5,4 +5,5 @@ ignored-classes = pytest
 
 [MESSAGES CONTROL]
 
-disable = useless-object-inheritance
+disable = import-outside-toplevel,
+  useless-object-inheritance
