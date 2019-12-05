@@ -1,14 +1,10 @@
 """Pylint plugin for py.test"""
-from __future__ import absolute_import, print_function, unicode_literals
+
 import re
 from os import sep
 from os.path import exists, join, dirname
 import sys
-from six.moves.configparser import (  # pylint: disable=import-error
-    ConfigParser,
-    NoSectionError,
-    NoOptionError
-)
+from configparser import ConfigParser, NoSectionError, NoOptionError
 
 from pylint import lint
 from pylint.config import PYLINTRC
@@ -171,7 +167,7 @@ def pytest_configure(config):
     config.addinivalue_line('markers', "pylint: Tests which run pylint.")
 
 
-class PylintPlugin(object):
+class PylintPlugin:
     """
     A Plugin object for pylint, which loads and records file mtimes.
     """
@@ -235,13 +231,9 @@ def pytest_collection_finish(session):
         args_list.append(jobs)
     print('-' * 65)
     print('Linting files')
-    # Disabling keyword arg to handle both 1.x and 2.x pylint API calls
-    # pylint: disable=unexpected-keyword-arg
 
     # Run pylint over the collected files.
     try:
-        result = lint.Run(args_list, reporter=reporter, exit=False)
-    except TypeError:  # Handle pylint 2.0 API
         result = lint.Run(args_list, reporter=reporter, do_exit=False)
     except RuntimeError:
         return
@@ -261,7 +253,7 @@ class PyLintItem(pytest.Item, pytest.File):
     # the checks.
     # pylint: disable=no-member,abstract-method
     def __init__(self, fspath, parent, msg_format=None, pylintrc_file=None):
-        super(PyLintItem, self).__init__(fspath, parent)
+        super().__init__(fspath, parent)
 
         self.add_marker("pylint")
         self.rel_path = get_rel_path(
@@ -328,7 +320,7 @@ class PyLintItem(pytest.Item, pytest.File):
         """Handle any test failures by checkint that they were ours."""
         if excinfo.errisinstance(PyLintException):
             return excinfo.value.args[0]
-        return super(PyLintItem, self).repr_failure(excinfo, style)
+        return super().repr_failure(excinfo, style)
 
     def reportinfo(self):
         """Generate our test report"""

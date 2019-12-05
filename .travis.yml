@@ -6,9 +6,6 @@ matrix:
     - python: 3.7
     - python: 3.6
     - python: 3.5
-    - python: 3.4
-      dist: trusty
-    - python: 2.7
 install:
   - "pip install tox-travis tox==3.14.0 coveralls"
   - "pip install -e ."
