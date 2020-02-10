@@ -49,6 +49,14 @@ This code is heavily based on
 Releases
 ========
 
+0.15.0
+~~~~~~
+
+- Added support for Python 3.8 thanks to `yanqd0 <https://github.com/michael-k>`_
+- Implemented option to output Pylint results to a reports file thanks to `jose-lpa <https://github.com/jose-lpa>`_
+- Refactored into simpler plugin structure
+
+
 0.14.1
 ~~~~~~
 
