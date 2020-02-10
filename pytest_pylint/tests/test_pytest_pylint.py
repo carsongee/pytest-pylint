@@ -5,6 +5,7 @@ Unit testing module for pytest-pylint plugin
 import os
 
 import mock
+import pytest
 
 
 pytest_plugins = ('pytester',)  # pylint: disable=invalid-name
@@ -65,6 +66,19 @@ max-line-length=3
     assert 'Line too long (10/3)' in result.stdout.str()
 
 
+def test_pylintrc_file_toml(testdir):
+    """Verify that pyproject.toml can be used as a pylint rc file."""
+    rcfile = testdir.makefile('.toml', """
+[tool.pylint.FORMAT]
+max-line-length = "3"
+""")
+    testdir.makepyfile("""import sys""")
+    result = testdir.runpytest(
+        '--pylint', '--pylint-rcfile={0}'.format(rcfile.strpath)
+    )
+    assert 'Line too long (10/3)' in result.stdout.str()
+
+
 def test_pylintrc_file_beside_ini(testdir):
     """
     Verify that a specified pylint rc file will work what placed into pytest
@@ -98,9 +112,21 @@ addopts = --pylint --pylint-rcfile={0}
     assert 'Line too long (10/3)' in result.stdout.str()
 
 
-def test_pylintrc_ignore(testdir):
+@pytest.mark.parametrize("rcformat", ("ini", "toml", "simple_toml"))
+def test_pylintrc_ignore(testdir, rcformat):
     """Verify that a pylintrc file with ignores will work."""
-    rcfile = testdir.makefile('rc', """
+    if rcformat == "toml":
+        rcfile = testdir.makefile('toml', """
+[tool.pylint.master]
+ignore = ["test_pylintrc_ignore.py", "foo.py"]
+""")
+    elif rcformat == "simple_toml":
+        rcfile = testdir.makefile('toml', """
+[tool.pylint.MASTER]
+ignore = "test_pylintrc_ignore.py,foo.py"
+""")
+    else:
+        rcfile = testdir.makefile('rc', """
 [MASTER]
 
 ignore = test_pylintrc_ignore.py
@@ -112,9 +138,16 @@ ignore = test_pylintrc_ignore.py
     assert 'collected 0 items' in result.stdout.str()
 
 
-def test_pylintrc_msg_template(testdir):
+@pytest.mark.parametrize("rcformat", ("ini", "toml"))
+def test_pylintrc_msg_template(testdir, rcformat):
     """Verify that msg-template from pylintrc file is handled."""
-    rcfile = testdir.makefile('rc', """
+    if rcformat == "toml":
+        rcfile = testdir.makefile('toml', """
+[tool.pylint.REPORTS]
+msg-template = "start {msg_id} end"
+""")
+    else:
+        rcfile = testdir.makefile('rc', """
 [REPORTS]
 
 msg-template=start {msg_id} end

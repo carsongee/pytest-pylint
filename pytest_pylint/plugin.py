@@ -7,6 +7,7 @@ from configparser import ConfigParser, NoSectionError, NoOptionError
 from pylint import lint
 from pylint.config import PYLINTRC
 import pytest
+import toml
 
 from .pylint_util import ProgrammaticReporter
 from .util import get_rel_path, PyLintException, should_include_file
@@ -97,28 +98,60 @@ class PylintPlugin:
         # collection methods and not pyint's internal
         if pylintrc_file and exists(pylintrc_file):
             self.pylintrc_file = pylintrc_file
-            self.pylint_config = ConfigParser()
-            self.pylint_config.read(pylintrc_file)
+            if pylintrc_file.endswith(".toml"):
+                self._load_pyproject_toml(pylintrc_file)
+            else:
+                self.pylint_config = ConfigParser()
+                self.pylint_config.read(pylintrc_file)
 
-            try:
-                ignore_string = self.pylint_config.get('MASTER', 'ignore')
-                if ignore_string:
-                    self.pylint_ignore = ignore_string.split(',')
-            except (NoSectionError, NoOptionError):
-                pass
+                try:
+                    ignore_string = self.pylint_config.get('MASTER', 'ignore')
+                    if ignore_string:
+                        self.pylint_ignore = ignore_string.split(',')
+                except (NoSectionError, NoOptionError):
+                    pass
 
-            try:
-                self.pylint_ignore_patterns = self.pylint_config.get(
-                    'MASTER', 'ignore-patterns')
-            except (NoSectionError, NoOptionError):
-                pass
+                try:
+                    self.pylint_ignore_patterns = self.pylint_config.get(
+                        'MASTER', 'ignore-patterns')
+                except (NoSectionError, NoOptionError):
+                    pass
 
+                try:
+                    self.pylint_msg_template = self.pylint_config.get(
+                        'REPORTS', 'msg-template'
+                    )
+                except (NoSectionError, NoOptionError):
+                    pass
+
+    def _load_pyproject_toml(self, pylintrc_file):
+        with open(pylintrc_file, "r") as f_p:
             try:
-                self.pylint_msg_template = self.pylint_config.get(
-                    'REPORTS', 'msg-template'
-                )
-            except (NoSectionError, NoOptionError):
-                pass
+                content = toml.load(f_p)
+            except (TypeError, toml.decoder.TomlDecodeError):
+                return
+
+        try:
+            self.pylint_config = content["tool"]["pylint"]
+        except KeyError:
+            return
+
+        master_section = {}
+        reports_section = {}
+        for key, value in self.pylint_config.items():
+            if not master_section and key.lower() == "master":
+                master_section = value
+            elif not reports_section and key.lower() == "reports":
+                reports_section = value
+
+        ignore = master_section.get("ignore")
+        if ignore:
+            self.pylint_ignore = ignore.split(",") if isinstance(ignore, str) \
+                else ignore
+
+        self.pylint_ignore_patterns = master_section.get("ignore-patterns") \
+            or []
+        self.pylint_msg_template = reports_section.get("msg-template")
 
     def pytest_sessionfinish(self, session):
         """
