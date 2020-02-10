@@ -43,7 +43,7 @@ Acknowledgements
 ================
 
 This code is heavily based on 
-`pytest-flakes <https://github.com/fschulze/pytest-flakes>`_
+`pytest-flakes <https://github.com/fschulze/pytest-flakes>`__
 
 
 Releases
@@ -52,8 +52,8 @@ Releases
 0.15.0
 ~~~~~~
 
-- Added support for Python 3.8 thanks to `yanqd0 <https://github.com/michael-k>`_
-- Implemented option to output Pylint results to a reports file thanks to `jose-lpa <https://github.com/jose-lpa>`_
+- Added support for Python 3.8 thanks to `michael-k <https://github.com/michael-k>`__
+- Implemented option to output Pylint results to a reports file thanks to `jose-lpa <https://github.com/jose-lpa>`__
 - Refactored into simpler plugin structure
 
 
@@ -61,35 +61,35 @@ Releases
 ~~~~~~
 
 - Corrected pytest-pylint to properly support ``-p no:cacheprovider``
-  thanks to `yanqd0 <https://github.com/yanqd0>`_
+  thanks to `yanqd0 <https://github.com/yanqd0>`__
 
 0.14.0
 ~~~~~~
 
 - Added support for Pylint's ignore-patterns for regex based ignores
-  thanks to `khokhlin <https://github.com/khokhlin>`_
+  thanks to `khokhlin <https://github.com/khokhlin>`__
 - pytest-pylint now caches successful pylint checks to speedup test
   reruns when files haven't changed thanks to `yanqd0
-  <https://github.com/yanqd0>`_
+  <https://github.com/yanqd0>`__
 
 0.13.0
 ~~~~~~
 
 - Python 3.7 compatibility verified
 - Ignore paths no longer match partial names thanks to `heoga
-  <https://github.com/heoga>`_
+  <https://github.com/heoga>`__
 
 0.12.3
 ~~~~~~
 
-- `jamur2 <https://github.com/jamur2>`_ corrected issue where file
+- `jamur2 <https://github.com/jamur2>`__ corrected issue where file
   paths where not being output properly on lint failures.
 
 0.12.2
 ~~~~~~
 
 - Resolved issue where failing files weren't reported thanks to reports from
-  `skirpichev <https://github.com/skirpichev>`_ and `jamur2 <https://github.com/jamur2>`_
+  `skirpichev <https://github.com/skirpichev>`__ and `jamur2 <https://github.com/jamur2>`__
 
 
 0.12.1
@@ -100,7 +100,7 @@ Releases
 0.12.0
 ~~~~~~
 
-- `jwkvam <https://github.com/jwkvam>`_ added progress output during linting.
+- `jwkvam <https://github.com/jwkvam>`__ added progress output during linting.
 
 0.11.0
 ~~~~~~
@@ -111,18 +111,18 @@ Releases
 0.10.0
 ~~~~~~
 
-- `jwkvam <https://github.com/jwkvam>`_ provided support for pylint 2.0
+- `jwkvam <https://github.com/jwkvam>`__ provided support for pylint 2.0
 
 0.9.0
 ~~~~~
 
-- `noisecapella <https://github.com/noisecapella>`_ added an option to
+- `noisecapella <https://github.com/noisecapella>`__ added an option to
   run pylint with multiple processes
 
 0.8.0
 ~~~~~
 
-- `bdrung <https://github.com/bdrung>`_ corrected inconsitent returns in a function
+- `bdrung <https://github.com/bdrung>`__ corrected inconsitent returns in a function
 - Dropped Python 3.3 support
 
 0.7.1
