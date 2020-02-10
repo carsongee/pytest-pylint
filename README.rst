@@ -52,8 +52,8 @@ Releases
 0.15.0
 ~~~~~~
 
-- Added support for Python 3.8 thanks to `michael-k <https://github.com/michael-k>`__
-- Implemented option to output Pylint results to a reports file thanks to `jose-lpa <https://github.com/jose-lpa>`__
+- Added support for Python 3.8 thanks to `yanqd0 <https://github.com/michael-k>`_
+- Implemented option to output Pylint results to a reports file thanks to `jose-lpa <https://github.com/jose-lpa>`_
 - Refactored into simpler plugin structure
 
 
