@@ -105,42 +105,46 @@ class PylintPlugin:
             pylintrc_file = join(dirname(str(config.inifile)), pylintrc_file)
 
         # Try getting ignores from pylintrc since we use pytest
-        # collection methods and not pyint's internal
+        # collection methods and not pylint's internal mechanism
         if pylintrc_file and exists(pylintrc_file):
             self.pylintrc_file = pylintrc_file
             if pylintrc_file.endswith(".toml"):
                 self._load_pyproject_toml(pylintrc_file)
             else:
-                self.pylint_config = ConfigParser()
-                self.pylint_config.read(pylintrc_file)
-
-                try:
-                    ignore_string = self.pylint_config.get('MASTER', 'ignore')
-                    if ignore_string:
-                        self.pylint_ignore = ignore_string.split(',')
-                except (NoSectionError, NoOptionError):
-                    pass
-
-                try:
-                    self.pylint_ignore_patterns = self.pylint_config.get(
-                        'MASTER', 'ignore-patterns'
-                    ).split(',')
-                except (NoSectionError, NoOptionError):
-                    pass
-
-                try:
-                    self.pylint_msg_template = self.pylint_config.get(
-                        'REPORTS', 'msg-template'
-                    )
-                except (NoSectionError, NoOptionError):
-                    pass
+                self._load_rc_file(pylintrc_file)
 
         # Command line arguments take presedence over rcfile ones if set
         if config.option.pylint_ignore is not None:
             self.pylint_ignore = config.option.pylint_ignore.split(',')
         if config.option.pylint_ignore_patterns is not None:
-            self.pylint_ignore_patterns =\
+            self.pylint_ignore_patterns = (
                 config.option.pylint_ignore_patterns.split(',')
+            )
+
+    def _load_rc_file(self, pylintrc_file):
+        self.pylint_config = ConfigParser()
+        self.pylint_config.read(pylintrc_file)
+
+        try:
+            ignore_string = self.pylint_config.get('MASTER', 'ignore')
+            if ignore_string:
+                self.pylint_ignore = ignore_string.split(',')
+        except (NoSectionError, NoOptionError):
+            pass
+
+        try:
+            self.pylint_ignore_patterns = self.pylint_config.get(
+                'MASTER', 'ignore-patterns'
+            ).split(',')
+        except (NoSectionError, NoOptionError):
+            pass
+
+        try:
+            self.pylint_msg_template = self.pylint_config.get(
+                'REPORTS', 'msg-template'
+            )
+        except (NoSectionError, NoOptionError):
+            pass
 
     def _load_pyproject_toml(self, pylintrc_file):
         with open(pylintrc_file, "r") as f_p:
@@ -164,11 +168,14 @@ class PylintPlugin:
 
         ignore = master_section.get("ignore")
         if ignore:
-            self.pylint_ignore = ignore.split(",") if isinstance(ignore, str) \
+            self.pylint_ignore = (
+                ignore.split(",")
+                if isinstance(ignore, str)
                 else ignore
-
-        self.pylint_ignore_patterns = master_section.get("ignore-patterns") \
-            or []
+            )
+        self.pylint_ignore_patterns = (
+            master_section.get("ignore-patterns") or []
+        )
         self.pylint_msg_template = reports_section.get("msg-template")
 
     def pytest_sessionfinish(self, session):
@@ -214,6 +221,18 @@ class PylintPlugin:
         if jobs is not None:
             args_list.append('-j')
             args_list.append(jobs)
+        # These allow the user to override the pylint configuration's
+        # ignore list
+        if self.pylint_ignore:
+            args_list.append(
+                '--ignore={0}'.format(','.join(self.pylint_ignore))
+            )
+        if self.pylint_ignore_patterns:
+            args_list.append(
+                '--ignore-patterns={0}'.format(
+                    ','.join(self.pylint_ignore_patterns)
+                )
+            )
         print('-' * FILL_CHARS)
         print('Linting files')
 

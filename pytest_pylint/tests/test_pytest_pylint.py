@@ -242,11 +242,12 @@ def test_output_file(testdir):
 ], ids=['ignore', 'ignore-patterns'])
 def test_cmd_line_ignore(testdir, arg_opt_name, arg_opt_value):
     """Verify that cmd line args ignores will work."""
-    testdir.makepyfile("""import sys""")
+    testdir.makepyfile(test_cmd_line_ignore="""import sys""")
     result = testdir.runpytest(
         '--pylint', '--pylint-{0}={1}'.format(arg_opt_name, arg_opt_value)
     )
     assert 'collected 0 items' in result.stdout.str()
+    assert 'Unused import sys' not in result.stdout.str()
 
 
 @pytest.mark.parametrize('arg_opt_name, arg_opt_value', [
@@ -261,19 +262,21 @@ def test_cmd_line_ignore_pri(testdir, arg_opt_name, arg_opt_value):
     cmd_line_ignore = arg_opt_value
 
     rcfile = testdir.makefile('rc', """
-[MASTER]
+    [MASTER]
 
-{0} = {1}
-""".format(arg_opt_name, file_ignore))
+    {0} = {1},foo
+    """.format(arg_opt_name, file_ignore))
     testdir.makepyfile(**{
-        file_ignore: """import sys""",
-        cmd_arg_ignore: """import os"""
+        file_ignore: 'import sys',
+        cmd_arg_ignore: 'import os',
     })
     result = testdir.runpytest(
-        '--pylint', '--pylint-rcfile={0}'.format(rcfile.strpath),
-        '--pylint-{0}={1}'.format(arg_opt_name, cmd_line_ignore)
+
+        '--pylint',
+        '--pylint-rcfile={0}'.format(rcfile.strpath),
+        '--pylint-{0}={1}'.format(arg_opt_name, cmd_line_ignore),
+        '-s',
     )
 
     assert 'collected 1 item' in result.stdout.str()
-    assert 'Unused import os' not in result.stdout.str()
     assert 'Unused import sys' in result.stdout.str()
