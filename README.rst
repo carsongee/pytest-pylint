@@ -49,6 +49,11 @@ This code is heavily based on
 Releases
 ========
 
+0.15.1
+~~~~~~
+
+- Made `--no-pylint` functional again
+
 0.15.0
 ~~~~~~
 
