@@ -39,7 +39,7 @@ def test_subdirectories(testdir):
 def test_disable(testdir):
     """Verify basic pylint checks"""
     testdir.makepyfile("""import sys""")
-    result = testdir.runpytest('--pylint --no-pylint')
+    result = testdir.runpytest('--pylint', '--no-pylint')
     assert 'Final newline missing' not in result.stdout.str()
     assert 'Linting files' not in result.stdout.str()
 
