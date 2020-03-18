@@ -70,7 +70,7 @@ def pytest_configure(config):
     :param _pytest.config.Config config: pytest config object
     """
     config.addinivalue_line('markers', "pylint: Tests which run pylint.")
-    if config.option.pylint:
+    if config.option.pylint and not config.option.no_pylint:
         pylint_plugin = PylintPlugin(config)
         config.pluginmanager.register(pylint_plugin)
 
