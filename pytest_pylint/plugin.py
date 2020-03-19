@@ -274,7 +274,7 @@ class PyLintItem(pytest.Item, pytest.File):
 
         self._nodeid += '::PYLINT'
         self.mtime = self.fspath.mtime()
-        prev_mtime = self.plugin.mtimes.get(self.name, 0)
+        prev_mtime = self.plugin.mtimes.get(self.rel_path, 0)
         self.should_skip = (prev_mtime == self.mtime)
 
     def setup(self):
@@ -319,7 +319,7 @@ class PyLintItem(pytest.Item, pytest.File):
             raise PyLintException('\n'.join(reported_errors))
 
         # Update the cache if the item passed pylint.
-        self.plugin.mtimes[self.name] = self.mtime
+        self.plugin.mtimes[self.rel_path] = self.mtime
 
     def repr_failure(self, excinfo, style=None):
         """Handle any test failures by checking that they were ours."""
