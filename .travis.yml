@@ -7,7 +7,7 @@ matrix:
     - python: 3.6
     - python: 3.5
 install:
-  - "pip install tox-travis tox==3.14.0 coveralls"
+  - "pip install tox-travis tox==3.14.6 coveralls"
   - "pip install -e ."
 script: tox
 after_success:

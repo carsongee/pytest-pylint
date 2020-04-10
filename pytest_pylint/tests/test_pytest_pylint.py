@@ -4,8 +4,8 @@ Unit testing module for pytest-pylint plugin
 """
 import os
 from textwrap import dedent
+from unittest import mock
 
-import mock
 import pytest
 
 

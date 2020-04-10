@@ -1,19 +1,84 @@
 # -*- coding: utf-8 -*-
-"""Pylint plugin for py.test"""
+"""
+    pytest_pylint
+    ~~~~~~~~~~~~~~~
 
-from os.path import exists, join, dirname
+    Helpers for running pylint with py.test and have configurable rule
+    types (i.e. Convention, Warn, and Error) fail the
+    build. You can also specify a pylintrc file.
+
+    How it works
+
+    Pytest has a number of hooks which are used as interface in order to
+    extends its behaviour.
+    At first, this plugin uses, in order of execution:
+    * pytest_addoption - Which extends parameters options to be passed to
+    py.test in order to configure this plugin
+    * pytest_configure - Used to add a marker, and register another Pytest
+    Plugin (PylintPlugin).
+
+    PylintPlugin is the plugin which contains all the logic. And also
+    implements the py.test necessary hook to interact with.
+
+    Once it is registered in `pytest_configure`, the hooks already executed
+    by previous plugins will run. For instance, in case PylintPlugin had
+    `pytest_addoption` implemented, which runs before `pytest_configure`
+    in the hook cycle, it would be executed once PylintPlugin got registered.
+
+    PylintPlugin uses the `pytest_collect_file` hook which is called wih every
+    file available in the test target dir. This hook cllects all the file
+    pylint should run on, in this case files with extension ".py".
+
+    `pytest_collect_file` hook returns a collection of Node, or None. In
+    Pytest context, Node being  a base class that defines py.test Collection
+    Tree.
+
+    A Node can be a subclass o Collector, which has children, or an Item, which
+     is a leaf node.
+
+    A pratical example would be, a test file (Collector), can have multiple
+    test functions (multiple Items)
+
+    For this plugin, the relatioship of File to Item is one to one once, one
+    file represents one pylint result.
+
+    From that, there are two important classes: PyLintTestFile, and PyLintItem.
+
+    PyLintTestFile represents a python file, extension ".py", that was
+    collected based on target directory as mentioned previously.
+
+    PyLintItem represents one file which pylint was ran.
+
+    Back to PylintPlugin, `pytest_collection_finish` hook will run after the
+    collection phase where pylint will be ran on the collected file.
+
+    Based on the ProgrammaticReporter, the result is stored in a dictionary
+    with the file relative path being the key, and a list of errors related to
+        the file.
+
+    All PyLintTestFile returned during `pytest_collect_file`, returns an one
+    element list of PyLintItem. The Item implements runtest method which will
+    get the pylint messages per file and expose to the user.
+    ------------
+"""
+
+
+from collections import defaultdict
 from configparser import ConfigParser, NoSectionError, NoOptionError
+from os.path import exists, join, dirname
 
-from pylint import lint
-from pylint.config import PYLINTRC
 import pytest
 import toml
+from pylint import lint
+from pylint.config import PYLINTRC
 
 from .pylint_util import ProgrammaticReporter
 from .util import get_rel_path, PyLintException, should_include_file
 
 HISTKEY = 'pylint/mtimes'
 FILL_CHARS = 80
+NODEID_NAME = 'PYLINT'
+MARKER = 'pylint'
 
 
 def pytest_addoption(parser):
@@ -69,7 +134,8 @@ def pytest_configure(config):
 
     :param _pytest.config.Config config: pytest config object
     """
-    config.addinivalue_line('markers', "pylint: Tests which run pylint.")
+    config.addinivalue_line('markers',
+                            "{0}: Tests which run pylint.".format(MARKER))
     if config.option.pylint and not config.option.no_pylint:
         pylint_plugin = PylintPlugin(config)
         config.pluginmanager.register(pylint_plugin)
@@ -87,7 +153,7 @@ class PylintPlugin:
             self.mtimes = {}
 
         self.pylint_files = set()
-        self.pylint_messages = {}
+        self.pylint_messages = defaultdict(list)
         self.pylint_config = None
         self.pylintrc_file = None
         self.pylint_ignore = []
@@ -196,7 +262,9 @@ class PylintPlugin:
         if should_include_file(
                 rel_path, self.pylint_ignore, self.pylint_ignore_patterns
         ):
-            item = PyLintItem(path, parent, pylint_plugin=self)
+            # item = PyLintItem(fspath=path, parent=parent, pylint_plugin=self)
+            item = PyLintTestFile.from_parent(parent, fspath=path,
+                                              pylint_plugin=self)
         else:
             return None
 
@@ -244,27 +312,52 @@ class PylintPlugin:
         messages = result.linter.reporter.data
         # Stores the messages in a dictionary for lookup in tests.
         for message in messages:
-            if message.path not in self.pylint_messages:
-                self.pylint_messages[message.path] = []
             self.pylint_messages[message.path].append(message)
         print('-' * FILL_CHARS)
 
 
-class PyLintItem(pytest.Item, pytest.File):
-    """pylint test running class."""
-    # pylint doesn't deal well with dynamic modules and there isn't an
-    # astng plugin for pylint in pypi yet, so we'll have to disable
-    # the checks.
-    # pylint: disable=no-member,abstract-method
-    def __init__(self, fspath, parent, pylint_plugin):
-        super().__init__(fspath, parent)
+class PyLintTestFile(pytest.File):
+    """File that pylint will run on."""
+    rel_path: str
+    plugin: PylintPlugin
+    should_skip: bool
+    mtime: float
 
-        self.add_marker('pylint')
-        self.rel_path = get_rel_path(
+    @classmethod
+    # pylint: disable=arguments-differ
+    def from_parent(cls, parent, *, fspath, **kwargs):
+        plugin = kwargs.pop('pylint_plugin')
+        _self = getattr(super(), 'from_parent', cls)(parent, fspath=fspath)
+
+        _self.plugin = plugin
+
+        _self.rel_path = get_rel_path(
             fspath.strpath,
             parent.session.fspath.strpath
         )
-        self.plugin = pylint_plugin
+
+        _self.mtime = fspath.mtime()
+        prev_mtime = _self.plugin.mtimes.get(_self.rel_path, 0)
+        _self.should_skip = (prev_mtime == _self.mtime)
+
+        return _self
+
+    def collect(self):
+        """Create a PyLintItem for the File."""
+        yield PyLintItem.from_parent(parent=self, name=NODEID_NAME)
+
+
+class PyLintItem(pytest.Item):
+    """pylint test running class."""
+
+    parent: PyLintTestFile
+    plugin: PylintPlugin
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.add_marker(MARKER)
+        self.plugin = self.parent.plugin
 
         msg_format = self.plugin.pylint_msg_template
         if msg_format is None:
@@ -272,14 +365,13 @@ class PyLintItem(pytest.Item, pytest.File):
         else:
             self._msg_format = msg_format
 
-        self._nodeid += '::PYLINT'
-        self.mtime = self.fspath.mtime()
-        prev_mtime = self.plugin.mtimes.get(self.rel_path, 0)
-        self.should_skip = (prev_mtime == self.mtime)
+    @classmethod
+    def from_parent(cls, *args, **kwargs):  # pylint: disable=arguments-differ
+        return getattr(super(), 'from_parent', cls)(*args, **kwargs)
 
     def setup(self):
         """Mark unchanged files as SKIPPED."""
-        if self.should_skip:
+        if self.parent.should_skip:
             pytest.skip("file(s) previously passed pylint checks")
 
     def runtest(self):
@@ -288,7 +380,8 @@ class PyLintItem(pytest.Item, pytest.File):
 
         def _loop_errors(writer):
             reported_errors = []
-            for error in self.plugin.pylint_messages.get(self.rel_path, []):
+            for error in self.plugin.pylint_messages.get(self.parent.rel_path,
+                                                         []):
                 if error.C in self.config.option.pylint_error_types:
                     reported_errors.append(
                         error.format(self._msg_format)
@@ -319,7 +412,7 @@ class PyLintItem(pytest.Item, pytest.File):
             raise PyLintException('\n'.join(reported_errors))
 
         # Update the cache if the item passed pylint.
-        self.plugin.mtimes[self.rel_path] = self.mtime
+        self.plugin.mtimes[self.parent.rel_path] = self.parent.mtime
 
     def repr_failure(self, excinfo, style=None):
         """Handle any test failures by checking that they were ours."""
@@ -330,4 +423,4 @@ class PyLintItem(pytest.Item, pytest.File):
 
     def reportinfo(self):
         """Generate our test report"""
-        return self.fspath, None, "[pylint] {0}".format(self.rel_path)
+        return self.fspath, None, "[pylint] {0}".format(self.parent.rel_path)
