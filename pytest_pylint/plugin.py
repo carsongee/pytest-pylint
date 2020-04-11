@@ -9,16 +9,16 @@
 
     How it works
 
-    Pytest has a number of hooks which are used as interface in order to
+    Py.test has a number of hooks which are used as interface in order to
     extends its behaviour.
-    At first, this plugin uses, in order of execution:
+    In order of execution, at first, this plugin uses the hooks:
     * pytest_addoption - Which extends parameters options to be passed to
     py.test in order to configure this plugin
     * pytest_configure - Used to add a marker, and register another Pytest
     Plugin (PylintPlugin).
 
     PylintPlugin is the plugin which contains all the logic. And also
-    implements the py.test necessary hook to interact with.
+    implements the py.test necessary hooks to interact with.
 
     Once it is registered in `pytest_configure`, the hooks already executed
     by previous plugins will run. For instance, in case PylintPlugin had
@@ -26,15 +26,15 @@
     in the hook cycle, it would be executed once PylintPlugin got registered.
 
     PylintPlugin uses the `pytest_collect_file` hook which is called wih every
-    file available in the test target dir. This hook cllects all the file
+    file available in the test target dir. This hook collects all the file
     pylint should run on, in this case files with extension ".py".
 
     `pytest_collect_file` hook returns a collection of Node, or None. In
-    Pytest context, Node being  a base class that defines py.test Collection
+    py.test context, Node being a base class that defines py.test Collection
     Tree.
 
-    A Node can be a subclass o Collector, which has children, or an Item, which
-     is a leaf node.
+    A Node can be a subclass of Collector, which has children, or an Item, which
+    is a leaf node.
 
     A pratical example would be, a test file (Collector), can have multiple
     test functions (multiple Items)
@@ -47,14 +47,14 @@
     PyLintTestFile represents a python file, extension ".py", that was
     collected based on target directory as mentioned previously.
 
-    PyLintItem represents one file which pylint was ran.
+    PyLintItem represents one file which pylint was ran or will run.
 
     Back to PylintPlugin, `pytest_collection_finish` hook will run after the
-    collection phase where pylint will be ran on the collected file.
+    collection phase where pylint will be ran on the collected files.
 
     Based on the ProgrammaticReporter, the result is stored in a dictionary
-    with the file relative path being the key, and a list of errors related to
-        the file.
+    with the file relative path of the file being the key, and a list of
+    errors related to the file.
 
     All PyLintTestFile returned during `pytest_collect_file`, returns an one
     element list of PyLintItem. The Item implements runtest method which will
@@ -262,7 +262,6 @@ class PylintPlugin:
         if should_include_file(
                 rel_path, self.pylint_ignore, self.pylint_ignore_patterns
         ):
-            # item = PyLintItem(fspath=path, parent=parent, pylint_plugin=self)
             item = PyLintTestFile.from_parent(parent, fspath=path,
                                               pylint_plugin=self)
         else:
