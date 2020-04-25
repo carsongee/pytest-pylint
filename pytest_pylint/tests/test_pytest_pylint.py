@@ -4,8 +4,8 @@ Unit testing module for pytest-pylint plugin
 """
 import os
 from textwrap import dedent
+from unittest import mock
 
-import mock
 import pytest
 
 
@@ -22,6 +22,13 @@ def test_basic(testdir):
     assert 'passed, ' not in result.stdout.str()
     assert '1 failed' in result.stdout.str()
     assert 'Linting files' in result.stdout.str()
+
+
+def test_nodeid(testdir):
+    """Verify our nodeid adds a suffix"""
+    testdir.makepyfile('import sys')
+    result = testdir.runpytest('--pylint', '--collectonly')
+    assert '::PYLINT' in result.stdout.str()
 
 
 def test_subdirectories(testdir):
