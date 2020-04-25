@@ -9,10 +9,10 @@ from collections import defaultdict
 from configparser import ConfigParser, NoSectionError, NoOptionError
 from os.path import exists, join, dirname
 
-from pylint import lint
-from pylint.config import PYLINTRC
 import pytest
 import toml
+from pylint import lint
+from pylint.config import PYLINTRC
 
 from .pylint_util import ProgrammaticReporter
 from .util import get_rel_path, PyLintException, should_include_file

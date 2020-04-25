@@ -62,7 +62,7 @@ target/
 
 # Virtualenv
 .venv
-.pytest-pylint
+.pytest_pylint
 
 # Pycharm
 .idea
