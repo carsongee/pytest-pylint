@@ -22,7 +22,7 @@ setup(
     python_requires=">=3.5",
     install_requires=['pytest>=5.0', 'pylint>=2.0.0', 'toml>=0.7.1'],
     setup_requires=['pytest-runner'],
-    tests_require=['mock', 'coverage', 'pytest-pep8'],
+    tests_require=['coverage', 'pytest-pep8'],
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
