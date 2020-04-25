@@ -1,18 +1,25 @@
 # -*- coding: utf-8 -*-
-"""Pylint plugin for py.test"""
+"""
+    pytest plugins. Both pylint wrapper and PylintPlugin
 
-from os.path import exists, join, dirname
+"""
+
+
+from collections import defaultdict
 from configparser import ConfigParser, NoSectionError, NoOptionError
+from os.path import exists, join, dirname
 
 from pylint import lint
 from pylint.config import PYLINTRC
 import pytest
+import toml
 
 from .pylint_util import ProgrammaticReporter
 from .util import get_rel_path, PyLintException, should_include_file
 
 HISTKEY = 'pylint/mtimes'
 FILL_CHARS = 80
+MARKER = 'pylint'
 
 
 def pytest_addoption(parser):
@@ -50,6 +57,16 @@ def pytest_addoption(parser):
         default=None,
         help='Path to a file where Pylint report will be printed to.'
     )
+    group.addoption(
+        '--pylint-ignore',
+        default=None,
+        help='Files/directories that will be ignored'
+    )
+    group.addoption(
+        '--pylint-ignore-patterns',
+        default=None,
+        help='Files/directories patterns that will be ignored'
+    )
 
 
 def pytest_configure(config):
@@ -58,7 +75,10 @@ def pytest_configure(config):
 
     :param _pytest.config.Config config: pytest config object
     """
-    config.addinivalue_line('markers', "pylint: Tests which run pylint.")
+    config.addinivalue_line(
+        'markers',
+        "{0}: Tests which run pylint.".format(MARKER)
+    )
     if config.option.pylint and not config.option.no_pylint:
         pylint_plugin = PylintPlugin(config)
         config.pluginmanager.register(pylint_plugin)
@@ -76,7 +96,7 @@ class PylintPlugin:
             self.mtimes = {}
 
         self.pylint_files = set()
-        self.pylint_messages = {}
+        self.pylint_messages = defaultdict(list)
         self.pylint_config = None
         self.pylintrc_file = None
         self.pylint_ignore = []
@@ -94,31 +114,78 @@ class PylintPlugin:
             pylintrc_file = join(dirname(str(config.inifile)), pylintrc_file)
 
         # Try getting ignores from pylintrc since we use pytest
-        # collection methods and not pyint's internal
+        # collection methods and not pylint's internal mechanism
         if pylintrc_file and exists(pylintrc_file):
             self.pylintrc_file = pylintrc_file
-            self.pylint_config = ConfigParser()
-            self.pylint_config.read(pylintrc_file)
+            if pylintrc_file.endswith(".toml"):
+                self._load_pyproject_toml(pylintrc_file)
+            else:
+                self._load_rc_file(pylintrc_file)
 
-            try:
-                ignore_string = self.pylint_config.get('MASTER', 'ignore')
-                if ignore_string:
-                    self.pylint_ignore = ignore_string.split(',')
-            except (NoSectionError, NoOptionError):
-                pass
+        # Command line arguments take presedence over rcfile ones if set
+        if config.option.pylint_ignore is not None:
+            self.pylint_ignore = config.option.pylint_ignore.split(',')
+        if config.option.pylint_ignore_patterns is not None:
+            self.pylint_ignore_patterns = (
+                config.option.pylint_ignore_patterns.split(',')
+            )
 
-            try:
-                self.pylint_ignore_patterns = self.pylint_config.get(
-                    'MASTER', 'ignore-patterns')
-            except (NoSectionError, NoOptionError):
-                pass
+    def _load_rc_file(self, pylintrc_file):
+        self.pylint_config = ConfigParser()
+        self.pylint_config.read(pylintrc_file)
 
+        try:
+            ignore_string = self.pylint_config.get('MASTER', 'ignore')
+            if ignore_string:
+                self.pylint_ignore = ignore_string.split(',')
+        except (NoSectionError, NoOptionError):
+            pass
+
+        try:
+            self.pylint_ignore_patterns = self.pylint_config.get(
+                'MASTER', 'ignore-patterns'
+            ).split(',')
+        except (NoSectionError, NoOptionError):
+            pass
+
+        try:
+            self.pylint_msg_template = self.pylint_config.get(
+                'REPORTS', 'msg-template'
+            )
+        except (NoSectionError, NoOptionError):
+            pass
+
+    def _load_pyproject_toml(self, pylintrc_file):
+        with open(pylintrc_file, "r") as f_p:
             try:
-                self.pylint_msg_template = self.pylint_config.get(
-                    'REPORTS', 'msg-template'
-                )
-            except (NoSectionError, NoOptionError):
-                pass
+                content = toml.load(f_p)
+            except (TypeError, toml.decoder.TomlDecodeError):
+                return
+
+        try:
+            self.pylint_config = content["tool"]["pylint"]
+        except KeyError:
+            return
+
+        master_section = {}
+        reports_section = {}
+        for key, value in self.pylint_config.items():
+            if not master_section and key.lower() == "master":
+                master_section = value
+            elif not reports_section and key.lower() == "reports":
+                reports_section = value
+
+        ignore = master_section.get("ignore")
+        if ignore:
+            self.pylint_ignore = (
+                ignore.split(",")
+                if isinstance(ignore, str)
+                else ignore
+            )
+        self.pylint_ignore_patterns = (
+            master_section.get("ignore-patterns") or []
+        )
+        self.pylint_msg_template = reports_section.get("msg-template")
 
     def pytest_sessionfinish(self, session):
         """
@@ -135,13 +202,12 @@ class PylintPlugin:
             return None
 
         rel_path = get_rel_path(path.strpath, parent.session.fspath.strpath)
-        if self.pylint_config is None:
-            # No pylintrc, therefore no ignores, so return the item.
-            item = PyLintItem(path, parent, pylint_plugin=self)
-        elif should_include_file(
+        if should_include_file(
                 rel_path, self.pylint_ignore, self.pylint_ignore_patterns
         ):
-            item = PyLintItem(path, parent, pylint_plugin=self)
+            item = PylintFile.from_parent(
+                parent, fspath=path, plugin=self
+            )
         else:
             return None
 
@@ -166,6 +232,18 @@ class PylintPlugin:
         if jobs is not None:
             args_list.append('-j')
             args_list.append(jobs)
+        # These allow the user to override the pylint configuration's
+        # ignore list
+        if self.pylint_ignore:
+            args_list.append(
+                '--ignore={0}'.format(','.join(self.pylint_ignore))
+            )
+        if self.pylint_ignore_patterns:
+            args_list.append(
+                '--ignore-patterns={0}'.format(
+                    ','.join(self.pylint_ignore_patterns)
+                )
+            )
         print('-' * FILL_CHARS)
         print('Linting files')
 
@@ -177,27 +255,53 @@ class PylintPlugin:
         messages = result.linter.reporter.data
         # Stores the messages in a dictionary for lookup in tests.
         for message in messages:
-            if message.path not in self.pylint_messages:
-                self.pylint_messages[message.path] = []
             self.pylint_messages[message.path].append(message)
         print('-' * FILL_CHARS)
 
 
-class PyLintItem(pytest.Item, pytest.File):
-    """pylint test running class."""
-    # pylint doesn't deal well with dynamic modules and there isn't an
-    # astng plugin for pylint in pypi yet, so we'll have to disable
-    # the checks.
-    # pylint: disable=no-member,abstract-method
-    def __init__(self, fspath, parent, pylint_plugin):
-        super().__init__(fspath, parent)
+class PylintFile(pytest.File):
+    """File that pylint will run on."""
+    rel_path = None  # : str
+    plugin = None  # : PylintPlugin
+    should_skip = False  # : bool
+    mtime = None  # : float
 
-        self.add_marker('pylint')
-        self.rel_path = get_rel_path(
+    @classmethod
+    def from_parent(cls, parent, *, fspath, plugin):
+        # We add the ``plugin`` kwarg to get plugin level information so the
+        # signature differs
+        # pylint: disable=arguments-differ
+        _self = getattr(super(), 'from_parent', cls)(parent, fspath=fspath)
+        _self.plugin = plugin
+
+        _self.rel_path = get_rel_path(
             fspath.strpath,
             parent.session.fspath.strpath
         )
-        self.plugin = pylint_plugin
+        _self.mtime = fspath.mtime()
+        prev_mtime = _self.plugin.mtimes.get(_self.rel_path, 0)
+        _self.should_skip = (prev_mtime == _self.mtime)
+
+        return _self
+
+    def collect(self):
+        """Create a PyLintItem for the File."""
+        yield PyLintItem.from_parent(
+            parent=self,
+            name='{}::PYLINT'.format(self.fspath)
+        )
+
+
+class PyLintItem(pytest.Item):
+    """pylint test running class."""
+
+    parent = None  # : PylintFile
+    plugin = None  # : PylintPlugin
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.add_marker(MARKER)
+        self.plugin = self.parent.plugin
 
         msg_format = self.plugin.pylint_msg_template
         if msg_format is None:
@@ -205,14 +309,13 @@ class PyLintItem(pytest.Item, pytest.File):
         else:
             self._msg_format = msg_format
 
-        self._nodeid += '::PYLINT'
-        self.mtime = self.fspath.mtime()
-        prev_mtime = self.plugin.mtimes.get(self.name, 0)
-        self.should_skip = (prev_mtime == self.mtime)
+    @classmethod
+    def from_parent(cls, parent, **kw):
+        return getattr(super(), 'from_parent', cls)(parent, **kw)
 
     def setup(self):
         """Mark unchanged files as SKIPPED."""
-        if self.should_skip:
+        if self.parent.should_skip:
             pytest.skip("file(s) previously passed pylint checks")
 
     def runtest(self):
@@ -221,7 +324,9 @@ class PyLintItem(pytest.Item, pytest.File):
 
         def _loop_errors(writer):
             reported_errors = []
-            for error in self.plugin.pylint_messages.get(self.rel_path, []):
+            for error in self.plugin.pylint_messages.get(
+                    self.parent.rel_path, []
+            ):
                 if error.C in self.config.option.pylint_error_types:
                     reported_errors.append(
                         error.format(self._msg_format)
@@ -252,7 +357,7 @@ class PyLintItem(pytest.Item, pytest.File):
             raise PyLintException('\n'.join(reported_errors))
 
         # Update the cache if the item passed pylint.
-        self.plugin.mtimes[self.name] = self.mtime
+        self.plugin.mtimes[self.parent.rel_path] = self.parent.mtime
 
     def repr_failure(self, excinfo, style=None):
         """Handle any test failures by checking that they were ours."""
@@ -263,4 +368,4 @@ class PyLintItem(pytest.Item, pytest.File):
 
     def reportinfo(self):
         """Generate our test report"""
-        return self.fspath, None, "[pylint] {0}".format(self.rel_path)
+        return self.fspath, None, "[pylint] {0}".format(self.parent.rel_path)

@@ -45,9 +45,19 @@ Acknowledgements
 This code is heavily based on 
 `pytest-flakes <https://github.com/fschulze/pytest-flakes>`__
 
+Development
+===========
+
+If you want to help development, there is
+`overview documentation <https://github.com/carsongee/pytest-pylint//lob/master/DEVELOPMENT.rst>`_
 
 Releases
 ========
+
+0.16.0
+~~~~~~
+- Switched to new ``from_parent`` API and added development documentation `dineshtrivedi <https://github.com/dineshtrivedi>`_
+- Added support for toml based configuration of pylint thanks to `michael-k <https://github.com/michael-k>`_
 
 0.15.1
 ~~~~~~
@@ -57,7 +67,7 @@ Releases
 0.15.0
 ~~~~~~
 
-- Added support for Python 3.8 thanks to `yanqd0 <https://github.com/michael-k>`_
+- Added support for Python 3.8 thanks to `michael-k <https://github.com/michael-k>`_
 - Implemented option to output Pylint results to a reports file thanks to `jose-lpa <https://github.com/jose-lpa>`_
 - Refactored into simpler plugin structure
 
