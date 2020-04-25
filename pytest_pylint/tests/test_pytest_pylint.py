@@ -24,6 +24,13 @@ def test_basic(testdir):
     assert 'Linting files' in result.stdout.str()
 
 
+def test_nodeid(testdir):
+    """Verify our nodeid adds a suffix"""
+    testdir.makepyfile('import sys')
+    result = testdir.runpytest('--pylint', '--collectonly')
+    assert '::PYLINT' in result.stdout.str()
+
+
 def test_subdirectories(testdir):
     """Verify pylint checks files in subdirectories"""
     subdir = testdir.mkpydir('mymodule')

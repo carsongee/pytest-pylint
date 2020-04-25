@@ -45,6 +45,11 @@ Acknowledgements
 This code is heavily based on 
 `pytest-flakes <https://github.com/fschulze/pytest-flakes>`__
 
+Development
+===========
+
+If you want to help development, there is
+`overview documentation <https://github.com/carsongee/pytest-pylint//lob/master/DEVELOPMENT.rst>`_
 
 Releases
 ========
