@@ -261,15 +261,16 @@ class PylintPlugin:
 
 class PylintFile(pytest.File):
     """File that pylint will run on."""
-    rel_path: str
-    plugin: PylintPlugin
-    should_skip: bool
-    mtime: float
+    rel_path = None  # : str
+    plugin = None  # : PylintPlugin
+    should_skip = False  # : bool
+    mtime = None  # : float
 
     @classmethod
     def from_parent(cls, parent, *, fspath, plugin):
-        # We add plugin to get plugin level information so the
-        # signature differs pylint: disable=arguments-differ
+        # We add the ``plugin`` kwarg to get plugin level information so the
+        # signature differs
+        # pylint: disable=arguments-differ
         _self = getattr(super(), 'from_parent', cls)(parent, fspath=fspath)
         _self.plugin = plugin
 
@@ -294,8 +295,8 @@ class PylintFile(pytest.File):
 class PyLintItem(pytest.Item):
     """pylint test running class."""
 
-    parent: PylintFile
-    plugin: PylintPlugin
+    parent = None  # : PylintFile
+    plugin = None  # : PylintPlugin
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
