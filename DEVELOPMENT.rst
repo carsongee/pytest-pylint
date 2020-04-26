@@ -1,4 +1,8 @@
+pytest pylint
+-------------
 
+How it works
+============
 Helpers for running pylint with py.test and have configurable rule
 types (i.e. Convention, Warn, and Error) fail the
 build. You can also specify a pylintrc file.
@@ -48,3 +52,45 @@ errors related to the file.
 All PylintFile returned during `pytest_collect_file`, returns an one
 element list of PyLintItem. The Item implements runtest method which will
 get the pylint messages per file and expose to the user.
+
+Development Environment
+=======================
+
+Suggestion 1
+~~~~~~~~~~~~
+Use `pyenv <https://github.com/pyenv/pyenv>`_, and install all the versions supported by the plugin.
+Double-check on `tox.ini <https://github.com/carsongee/pytest-pylint//lob/master/DEVELOPMENT.rst>`_.
+
+.. code-block:: shell
+
+    pyenv install 3.5.9
+
+    pyenv install 3.6.10
+
+    pyenv install 3.7.7
+
+    pyenv install 3.8.2
+
+Set the installed versions as global, that will allow tox to find all of them.
+
+.. code-block:: shell
+
+    pyenv global 3.5.9 3.6.10 3.7.7 3.8.2
+
+Create virtualenv, install dependencies, run tests, and tox:
+
+.. code-block:: shell
+
+    python3.8 -m venv .pytest_pylint
+
+    source .pytest_pylint/bin/activate
+
+    pip install --upgrade setuptools pip tox
+
+    python setup.py install
+
+    python setup.py test
+
+    tox
+
+The development environment is complete.
