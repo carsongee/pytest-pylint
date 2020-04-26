@@ -49,10 +49,14 @@ Development
 ===========
 
 If you want to help development, there is
-`overview documentation <https://github.com/carsongee/pytest-pylint//lob/master/DEVELOPMENT.rst>`_
+`overview documentation <https://github.com/carsongee/pytest-pylint/blob/master/DEVELOPMENT.rst>`_
 
 Releases
 ========
+
+0.16.1
+~~~~~~
+- Corrected documentation and correctly pinned dependencies properly
 
 0.16.0
 ~~~~~~
