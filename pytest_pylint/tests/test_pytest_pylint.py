@@ -83,7 +83,7 @@ def test_pylintrc_file_toml(testdir):
         '.toml',
         """
         [tool.pylint.FORMAT]
-        max-line-length = 3
+        max-line-length = "3"
         """
     )
     testdir.makepyfile('import sys')
