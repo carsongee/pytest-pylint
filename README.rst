@@ -58,6 +58,11 @@ Releases
 ~~~~~~
 - Added support for latest pylint API >=2.5.1
 
+
+0.16.1
+~~~~~~
+- Corrected documentation and correctly pinned dependencies properly
+
 0.16.0
 ~~~~~~
 - Switched to new ``from_parent`` API and added development documentation `dineshtrivedi <https://github.com/dineshtrivedi>`_
