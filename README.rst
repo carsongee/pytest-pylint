@@ -54,6 +54,11 @@ If you want to help development, there is
 Releases
 ========
 
+0.17.0
+~~~~~~
+- Added support for latest pylint API >=2.5.1
+
+
 0.16.1
 ~~~~~~
 - Corrected documentation and correctly pinned dependencies properly

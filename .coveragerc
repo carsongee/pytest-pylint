@@ -1,5 +1,6 @@
 [run]
 source = .
+parallel = True
 omit =
     .tox/*
     setup.py
