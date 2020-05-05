@@ -249,7 +249,11 @@ class PylintPlugin:
 
         # Run pylint over the collected files.
         try:
+            # pylint >= 2.5.1 API
             result = lint.Run(args_list, reporter=reporter, exit=False)
+        except TypeError:
+            # pylint < 2.5.1 API
+            result = lint.Run(args_list, reporter=reporter, do_exit=False)
         except RuntimeError:
             return
         messages = result.linter.reporter.data
