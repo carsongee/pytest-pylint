@@ -9,6 +9,6 @@ matrix:
 install:
   - "pip install tox-travis tox==3.14.6 coveralls"
   - "pip install -e ."
-script: tox -p auto
+script: tox
 after_success:
   "coveralls"
