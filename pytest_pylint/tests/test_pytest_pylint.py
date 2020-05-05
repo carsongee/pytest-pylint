@@ -81,7 +81,7 @@ def test_pylintrc_file_toml(testdir):
     """Verify that pyproject.toml can be used as a pylint rc file."""
     rcfile = testdir.makefile(
         '.toml',
-        """
+        pylint="""
         [tool.pylint.FORMAT]
         max-line-length = "3"
         """
@@ -90,6 +90,20 @@ def test_pylintrc_file_toml(testdir):
     result = testdir.runpytest(
         '--pylint', '--pylint-rcfile={0}'.format(rcfile.strpath)
     )
+    # Parsing changed from integer to string in pylint >=2.5. Once
+    # support is dropped <2.5 this is removable
+    if 'should be of type int' in result.stdout.str():
+        rcfile = testdir.makefile(
+            '.toml',
+            pylint="""
+            [tool.pylint.FORMAT]
+            max-line-length = 3
+            """
+        )
+        result = testdir.runpytest(
+            '--pylint', '--pylint-rcfile={0}'.format(rcfile.strpath)
+        )
+
     assert 'Line too long (10/3)' in result.stdout.str()
 
 
