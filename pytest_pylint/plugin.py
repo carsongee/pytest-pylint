@@ -248,6 +248,9 @@ class PylintPlugin:
         print('Linting files')
 
         # Run pylint over the collected files.
+
+        # Pylint has changed APIs, but we support both
+        # pylint: disable=unexpected-keyword-arg
         try:
             # pylint >= 2.5.1 API
             result = lint.Run(args_list, reporter=reporter, exit=False)
