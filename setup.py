@@ -20,7 +20,7 @@ setup(
     packages=['pytest_pylint'],
     entry_points={'pytest11': ['pylint = pytest_pylint.plugin']},
     python_requires=">=3.5",
-    install_requires=['pytest>=5.4', 'pylint>=2.5.0', 'toml>=0.7.1'],
+    install_requires=['pytest>=5.4', 'pylint>=2.5.1', 'toml>=0.7.1'],
     setup_requires=['pytest-runner'],
     tests_require=['coverage', 'pytest-flake8'],
     classifiers=[
