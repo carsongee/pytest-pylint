@@ -28,7 +28,7 @@ def test_nodeid(testdir):
     """Verify our nodeid adds a suffix"""
     testdir.makepyfile('import sys')
     result = testdir.runpytest('--pylint', '--collectonly')
-    assert '::PYLINT' in result.stdout.str()
+    assert 'PYLINT' in result.stdout.str()
 
 
 def test_subdirectories(testdir):

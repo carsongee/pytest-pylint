@@ -295,7 +295,7 @@ class PylintFile(pytest.File):  # pylint: disable=abstract-method
         """Create a PyLintItem for the File."""
         yield PyLintItem.from_parent(
             parent=self,
-            name='{}::PYLINT'.format(self.fspath)
+            name='PYLINT',
         )
 
 
