@@ -142,6 +142,7 @@ def test_pylintrc_file_beside_ini(testdir):
     assert 'Line too long (10/3)' in result.stdout.str()
 
 
+# pylint: disable=not-callable
 @pytest.mark.parametrize("rcformat", ("ini", "toml", "simple_toml"))
 def test_pylintrc_ignore(testdir, rcformat):
     """Verify that a pylintrc file with ignores will work."""

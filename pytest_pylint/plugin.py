@@ -266,7 +266,7 @@ class PylintPlugin:
         print('-' * FILL_CHARS)
 
 
-class PylintFile(pytest.File):
+class PylintFile(pytest.File):  # pylint: disable=abstract-method
     """File that pylint will run on."""
     rel_path = None  # : str
     plugin = None  # : PylintPlugin
@@ -299,7 +299,7 @@ class PylintFile(pytest.File):
         )
 
 
-class PyLintItem(pytest.Item):
+class PyLintItem(pytest.Item):  # pylint: disable=abstract-method
     """pylint test running class."""
 
     parent = None  # : PylintFile
