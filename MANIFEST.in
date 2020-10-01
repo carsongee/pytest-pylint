@@ -1,3 +1,6 @@
 include README.rst
 include LICENSE
 include pytest_pylint
+graft pytest_pylint/tests
+global-exclude __pycache__
+global-exclude *.py[cod]
