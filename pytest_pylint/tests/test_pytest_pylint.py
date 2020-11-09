@@ -3,6 +3,7 @@
 Unit testing module for pytest-pylint plugin
 """
 import os
+import re
 from textwrap import dedent
 from unittest import mock
 
@@ -26,9 +27,21 @@ def test_basic(testdir):
 
 def test_nodeid(testdir):
     """Verify our nodeid adds a suffix"""
-    testdir.makepyfile('import sys')
-    result = testdir.runpytest('--pylint', '--collectonly')
-    assert '::PYLINT' in result.stdout.str()
+    testdir.makepyfile(app='import sys')
+    result = testdir.runpytest('--pylint', '--collectonly', '--verbose')
+    for expected in '<PylintFile app.py>', '<PyLintItem PYLINT>':
+        assert expected in result.stdout.str()
+
+
+def test_nodeid_no_dupepath(testdir):
+    """Verify we don't duplicate the node path in our node id."""
+    testdir.makepyfile(app='import sys')
+    result = testdir.runpytest('--pylint', '--verbose')
+    assert re.search(
+        r'^FAILED\s+app\.py::PYLINT$',
+        result.stdout.str(),
+        flags=re.MULTILINE
+    )
 
 
 def test_subdirectories(testdir):
@@ -63,7 +76,7 @@ def test_error_control(testdir):
 def test_pylintrc_file(testdir):
     """Verify that a specified pylint rc file will work."""
     rcfile = testdir.makefile(
-        'rc',
+        '.rc',
         """
         [FORMAT]
 
@@ -147,7 +160,7 @@ def test_pylintrc_ignore(testdir, rcformat):
     """Verify that a pylintrc file with ignores will work."""
     if rcformat == "toml":
         rcfile = testdir.makefile(
-            'toml',
+            '.toml',
             """
             [tool.pylint.master]
             ignore = ["test_pylintrc_ignore.py", "foo.py"]
@@ -155,7 +168,7 @@ def test_pylintrc_ignore(testdir, rcformat):
         )
     elif rcformat == "simple_toml":
         rcfile = testdir.makefile(
-            'toml',
+            '.toml',
             """
             [tool.pylint.MASTER]
             ignore = "test_pylintrc_ignore.py,foo.py"
@@ -163,7 +176,7 @@ def test_pylintrc_ignore(testdir, rcformat):
         )
     else:
         rcfile = testdir.makefile(
-            'rc',
+            '.rc',
             """
             [MASTER]
 
@@ -182,7 +195,7 @@ def test_pylintrc_msg_template(testdir, rcformat):
     """Verify that msg-template from pylintrc file is handled."""
     if rcformat == "toml":
         rcfile = testdir.makefile(
-            'toml',
+            '.toml',
             """
             [tool.pylint.REPORTS]
             msg-template = "start {msg_id} end"
@@ -190,7 +203,7 @@ def test_pylintrc_msg_template(testdir, rcformat):
         )
     else:
         rcfile = testdir.makefile(
-            'rc',
+            '.rc',
             """
             [REPORTS]
 
@@ -309,7 +322,7 @@ def test_cmd_line_ignore_pri(testdir, arg_opt_name, arg_opt_value):
     cmd_line_ignore = arg_opt_value
 
     rcfile = testdir.makefile(
-        'rc',
+        '.rc',
         """
         [MASTER]
 
