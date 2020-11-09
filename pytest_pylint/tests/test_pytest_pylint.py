@@ -3,6 +3,7 @@
 Unit testing module for pytest-pylint plugin
 """
 import os
+import re
 from textwrap import dedent
 from unittest import mock
 
@@ -26,10 +27,21 @@ def test_basic(testdir):
 
 def test_nodeid(testdir):
     """Verify our nodeid adds a suffix"""
-    testdir.makepyfile('import sys')
-    result = testdir.runpytest('--pylint', '--collectonly')
-    assert '::PYLINT' in result.stdout.str()
+    testdir.makepyfile(app='import sys')
+    result = testdir.runpytest('--pylint', '--collectonly', '--verbose')
+    assert 'app.py::PYLINT' in result.stdout.str()
 
+
+def test_nodeid_no_dupepath(testdir):
+    """Verify we don't duplicate the node path in our node id."""
+    testdir.makepyfile(app='import sys')
+    result = testdir.runpytest('--pylint', '--verbose')
+    assert re.search(
+        r'^FAILED\s+app\.py::PYLINT$',
+        result.stdout.str(),
+        flags=re.MULTILINE
+    )
+  
 
 def test_subdirectories(testdir):
     """Verify pylint checks files in subdirectories"""
