@@ -142,9 +142,11 @@ class PylintPlugin:
             pass
 
         try:
-            self.pylint_ignore_patterns = self.pylint_config.get(
+            ignore_patterns = self.pylint_config.get(
                 'MASTER', 'ignore-patterns'
-            ).split(',')
+            )
+            if ignore_patterns:
+                self.pylint_ignore_patterns = ignore_patterns.split(',')
         except (NoSectionError, NoOptionError):
             pass
 
