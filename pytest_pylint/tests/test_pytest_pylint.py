@@ -268,6 +268,43 @@ def test_skip_checked_files(testdir):
     assert '1 passed' in result.stdout.str()
 
 
+def test_invalidate_cache_when_config_changes(testdir):
+    """If pylintrc changes, no cache should apply."""
+    rcfile = testdir.makefile(
+        '.rc',
+        '[MESSAGES CONTROL]',
+        'disable=missing-final-newline'
+    )
+    testdir.makepyfile('"""hi."""')
+    result = testdir.runpytest(
+        '--pylint', '--pylint-rcfile={0}'.format(rcfile.strpath)
+    )
+    assert '1 passed' in result.stdout.str()
+
+    result = testdir.runpytest(
+        '--pylint', '--pylint-rcfile={0}'.format(rcfile.strpath)
+    )
+    assert '1 skipped' in result.stdout.str()
+
+    # Change RC file entirely
+    result = testdir.runpytest('--pylint')
+    assert '1 failed' in result.stdout.str()
+
+    # Change contents of RC file
+    result = testdir.runpytest(
+        '--pylint', '--pylint-rcfile={0}'.format(rcfile.strpath)
+    )
+    assert '1 passed' in result.stdout.str()
+
+    with open(rcfile, 'w'):
+        pass
+
+    result = testdir.runpytest(
+        '--pylint', '--pylint-rcfile={0}'.format(rcfile.strpath)
+    )
+    assert '1 failed' in result.stdout.str()
+
+
 def test_output_file(testdir):
     """Verify pylint report output"""
     testdir.makepyfile('import sys')
