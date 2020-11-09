@@ -8,7 +8,7 @@
 from collections import defaultdict
 from configparser import ConfigParser, NoSectionError, NoOptionError
 from os import makedirs
-from os.path import exists, join, dirname
+from os.path import getmtime, exists, join, dirname
 
 from pylint import lint
 from pylint.config import PYLINTRC
@@ -19,6 +19,7 @@ from .pylint_util import ProgrammaticReporter
 from .util import get_rel_path, PyLintException, should_include_file
 
 HISTKEY = 'pylint/mtimes'
+PYLINT_CONFIG_CACHE_KEY = 'pylintrc'
 FILL_CHARS = 80
 MARKER = 'pylint'
 
@@ -118,6 +119,16 @@ class PylintPlugin:
         # collection methods and not pylint's internal mechanism
         if pylintrc_file and exists(pylintrc_file):
             self.pylintrc_file = pylintrc_file
+
+            # Check if pylint config has a different filename or date
+            # and invalidate the cache if it has changed.
+            pylint_mtime = getmtime(pylintrc_file)
+            cache_key = PYLINT_CONFIG_CACHE_KEY + pylintrc_file
+            cache_value = self.mtimes.get(cache_key)
+            if cache_value is None or cache_value < pylint_mtime:
+                self.mtimes = {}
+            self.mtimes[cache_key] = pylint_mtime
+
             if pylintrc_file.endswith(".toml"):
                 self._load_pyproject_toml(pylintrc_file)
             else:
