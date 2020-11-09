@@ -7,6 +7,7 @@
 
 from collections import defaultdict
 from configparser import ConfigParser, NoSectionError, NoOptionError
+from os import makedirs
 from os.path import exists, join, dirname
 
 from pylint import lint
@@ -355,6 +356,9 @@ class PyLintItem(pytest.Item):
             return reported_errors
 
         if pylint_output_file:
+            output_dir = dirname(pylint_output_file)
+            if output_dir:
+                makedirs(output_dir, exist_ok=True)
             with open(pylint_output_file, 'a') as _file:
                 reported_errors = _loop_errors(writer=_file.write)
         else:

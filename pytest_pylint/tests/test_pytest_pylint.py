@@ -269,7 +269,7 @@ def test_skip_checked_files(testdir):
 
 
 def test_output_file(testdir):
-    """Verify basic pylint checks"""
+    """Verify pylint report output"""
     testdir.makepyfile('import sys')
     testdir.runpytest('--pylint', '--pylint-output-file=pylint.report')
     output_file = os.path.join(testdir.tmpdir.strpath, 'pylint.report')
@@ -292,6 +292,23 @@ def test_output_file(testdir):
     assert (
         'test_output_file.py:1: [W0611(unused-import), ] Unused import sys'
     ) in report
+
+
+def test_output_file_makes_dirs(testdir):
+    """Verify output works with folders properly."""
+    testdir.makepyfile('import sys')
+    output_path = os.path.join('reports', 'pylint.report')
+    testdir.runpytest(
+        '--pylint',
+        '--pylint-output-file={}'.format(output_path)
+    )
+    output_file = os.path.join(testdir.tmpdir.strpath, output_path)
+    assert os.path.isfile(output_file)
+    # Run again to make sure we don't crash trying to make a dir that exists
+    testdir.runpytest(
+        '--pylint',
+        '--pylint-output-file={}'.format(output_path)
+    )
 
 
 @pytest.mark.parametrize('arg_opt_name, arg_opt_value', [
