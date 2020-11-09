@@ -54,19 +54,34 @@ If you want to help development, there is
 Releases
 ========
 
+0.18.0
+~~~~~~
+
+- Added support for creating missing folders when using ``--pylint-output-file``
+- Now when pylint's ``ignore_patterns`` is blank, we don't ignore all files
+- Added cache invalidation when your pylintrc changes
+- Verified support for latest pytest and Python 3.9
+- Corrected badly named nodes (duplicated path) thanks to `yanqd0 <https://github.com/yanqd0>`__
+- Added tests to source distribution thanks to `sbraz <https://github.com/sbraz>`__
+
+
 0.17.0
 ~~~~~~
+
 - Added support for latest pylint API >=2.5.1
 
 
 0.16.1
 ~~~~~~
+
 - Corrected documentation and correctly pinned dependencies properly
 
 0.16.0
 ~~~~~~
+
 - Switched to new ``from_parent`` API and added development documentation `dineshtrivedi <https://github.com/dineshtrivedi>`_
 - Added support for toml based configuration of pylint thanks to `michael-k <https://github.com/michael-k>`_
+
 
 0.15.1
 ~~~~~~
