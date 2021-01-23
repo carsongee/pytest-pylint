@@ -271,8 +271,6 @@ class PylintPlugin:
         except TypeError:
             # pylint < 2.5.1 API
             result = lint.Run(args_list, reporter=reporter, do_exit=False)
-        except RuntimeError:
-            return
         messages = result.linter.reporter.data
         # Stores the messages in a dictionary for lookup in tests.
         for message in messages:
