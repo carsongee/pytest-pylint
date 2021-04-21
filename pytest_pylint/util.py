@@ -14,7 +14,7 @@ def get_rel_path(path, parent_path):
     """
     Give the path to object relative to ``parent_path``.
     """
-    replaced_path = path.replace(parent_path, '', 1)
+    replaced_path = path.replace(parent_path, "", 1)
     if replaced_path[0] == sep:
         rel_path = replaced_path[1:]
     else:
