@@ -129,6 +129,7 @@ def test_pylintrc_file_pyproject_toml(testdir):
     testdir.makepyfile("import sys")
     result = testdir.runpytest("--pylint")
 
+    assert list(pylint.config.find_default_config_files()) == []
     assert "Line too long (10/3)" in result.stdout.str()
 
 
