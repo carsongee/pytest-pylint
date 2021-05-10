@@ -107,6 +107,7 @@ class PylintPlugin:
         else:
             # handling files apart from pylintrc was only introduced in pylint
             # 2.5, if we can't use find_default_config_files(), fall back on PYLINTRC
+            # once we drop support below 2.5 we can get rid of this
             try:
                 pylintrc_file = next(pylint_config.find_default_config_files(), None)
             except AttributeError:
