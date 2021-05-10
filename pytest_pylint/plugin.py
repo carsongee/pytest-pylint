@@ -13,7 +13,7 @@ from os.path import dirname, exists, getmtime, join
 import pytest
 import toml
 from pylint import lint
-from pylint.config import find_default_config_files
+import pylint.config
 
 from .pylint_util import ProgrammaticReporter
 from .util import PyLintException, get_rel_path, should_include_file
@@ -22,6 +22,13 @@ HISTKEY = "pylint/mtimes"
 PYLINT_CONFIG_CACHE_KEY = "pylintrc"
 FILL_CHARS = 80
 MARKER = "pylint"
+
+# handling files apart from pylintrc was only introduced in pylint 2.5, if we
+# can't use find_default_config_files(), fall back on PYLINTRC
+if hasattr(pylint.config, "find_default_config_files"):
+    PYLINTRC = next(pylint.config.find_default_config_files(), None)
+else:
+    PYLINTRC = pylint.config.PYLINTRC
 
 
 def pytest_addoption(parser):
@@ -102,9 +109,7 @@ class PylintPlugin:
         """Configure pytest after it is already enabled"""
 
         # Find pylintrc to check ignore list
-        pylintrc_file = config.option.pylint_rcfile or next(
-            find_default_config_files(), None
-        )
+        pylintrc_file = config.option.pylint_rcfile or PYLINTRC
 
         if pylintrc_file and not exists(pylintrc_file):
             # The directory of pytest.ini got a chance
