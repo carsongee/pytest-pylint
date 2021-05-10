@@ -113,6 +113,32 @@ def test_pylintrc_file_toml(testdir):
     assert "Line too long (10/3)" in result.stdout.str()
 
 
+def test_pylintrc_file_pyproject_toml(testdir):
+    """Verify that pyproject.toml can be used as a pylint rc file."""
+    testdir.makefile(
+        ".toml",
+        pyproject="""
+        [tool.pylint.FORMAT]
+        max-line-length = "3"
+        """,
+    )
+    testdir.makepyfile("import sys")
+    result = testdir.runpytest("--pylint")
+    # Parsing changed from integer to string in pylint >=2.5. Once
+    # support is dropped <2.5 this is removable
+    if "should be of type int" in result.stdout.str():
+        testdir.makefile(
+            ".toml",
+            pylint="""
+            [tool.pylint.FORMAT]
+            max-line-length = 3
+            """,
+        )
+        result = testdir.runpytest("--pylint")
+
+    assert "Line too long (10/3)" in result.stdout.str()
+
+
 def test_pylintrc_file_beside_ini(testdir):
     """
     Verify that a specified pylint rc file will work what placed into pytest

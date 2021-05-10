@@ -13,7 +13,7 @@ from os.path import dirname, exists, getmtime, join
 import pytest
 import toml
 from pylint import lint
-from pylint.config import PYLINTRC
+from pylint.config import find_default_config_files
 
 from .pylint_util import ProgrammaticReporter
 from .util import PyLintException, get_rel_path, should_include_file
@@ -102,7 +102,9 @@ class PylintPlugin:
         """Configure pytest after it is already enabled"""
 
         # Find pylintrc to check ignore list
-        pylintrc_file = config.option.pylint_rcfile or PYLINTRC
+        pylintrc_file = config.option.pylint_rcfile or next(
+            find_default_config_files(), None
+        )
 
         if pylintrc_file and not exists(pylintrc_file):
             # The directory of pytest.ini got a chance
