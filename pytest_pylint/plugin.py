@@ -25,9 +25,9 @@ MARKER = "pylint"
 
 # handling files apart from pylintrc was only introduced in pylint 2.5, if we
 # can't use find_default_config_files(), fall back on PYLINTRC
-if hasattr(pylint.config, "find_default_config_files"):
+try:
     PYLINTRC = next(pylint.config.find_default_config_files(), None)
-else:
+except AttributeError:
     PYLINTRC = pylint.config.PYLINTRC
 
 

@@ -7,7 +7,7 @@ import re
 from textwrap import dedent
 from unittest import mock
 
-import pylint
+import pylint.config
 import pytest
 
 pytest_plugins = ("pytester",)  # pylint: disable=invalid-name
@@ -117,8 +117,7 @@ def test_pylintrc_file_toml(testdir):
 def test_pylintrc_file_pyproject_toml(testdir):
     """Verify that pyproject.toml can be auto-detected as a pylint rc file."""
     # pylint only auto-detects pyproject.toml from 2.5 onwards
-    version_string = pylint.version
-    if version_string.startswith("2.3") or version_string.startswith("2.4"):
+    if not hasattr(pylint.config, "find_default_config_files"):
         return
     testdir.makefile(
         ".toml",
