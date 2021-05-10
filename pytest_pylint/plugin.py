@@ -10,10 +10,10 @@ from configparser import ConfigParser, NoOptionError, NoSectionError
 from os import makedirs
 from os.path import dirname, exists, getmtime, join
 
+import pylint.config
 import pytest
 import toml
 from pylint import lint
-import pylint.config
 
 from .pylint_util import ProgrammaticReporter
 from .util import PyLintException, get_rel_path, should_include_file
