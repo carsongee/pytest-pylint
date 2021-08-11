@@ -7,6 +7,7 @@ import re
 from textwrap import dedent
 from unittest import mock
 
+import pylint.config
 import pytest
 
 pytest_plugins = ("pytester",)  # pylint: disable=invalid-name
@@ -109,6 +110,24 @@ def test_pylintrc_file_toml(testdir):
         result = testdir.runpytest(
             "--pylint", "--pylint-rcfile={0}".format(rcfile.strpath)
         )
+
+    assert "Line too long (10/3)" in result.stdout.str()
+
+
+def test_pylintrc_file_pyproject_toml(testdir):
+    """Verify that pyproject.toml can be auto-detected as a pylint rc file."""
+    # pylint only auto-detects pyproject.toml from 2.5 onwards
+    if not hasattr(pylint.config, "find_default_config_files"):
+        return
+    testdir.makefile(
+        ".toml",
+        pyproject="""
+        [tool.pylint.FORMAT]
+        max-line-length = "3"
+        """,
+    )
+    testdir.makepyfile("import sys")
+    result = testdir.runpytest("--pylint")
 
     assert "Line too long (10/3)" in result.stdout.str()
 
@@ -269,7 +288,12 @@ def test_invalidate_cache_when_config_changes(testdir):
     assert "1 skipped" in result.stdout.str()
 
     # Change RC file entirely
-    result = testdir.runpytest("--pylint")
+    alt_rcfile = testdir.makefile(
+        ".rc", alt="[MESSAGES CONTROL]\ndisable=unbalanced-tuple-unpacking"
+    )
+    result = testdir.runpytest(
+        "--pylint", "--pylint-rcfile={0}".format(alt_rcfile.strpath)
+    )
     assert "1 failed" in result.stdout.str()
 
     # Change contents of RC file
