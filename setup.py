@@ -5,13 +5,17 @@ pytest-pylint
 
 Plugin for py.test for doing pylint tests
 """
+from pathlib import Path
 
 from setuptools import setup
+
+this_directory = Path(__file__).parent
+long_description = (this_directory / "README.rst").read_text(encoding="utf-8")
 
 setup(
     name="pytest-pylint",
     description="pytest plugin to check source code with pylint",
-    long_description=open("README.rst").read(),
+    long_description=long_description,
     license="MIT",
     version="0.18.0",
     author="Carson Gee",

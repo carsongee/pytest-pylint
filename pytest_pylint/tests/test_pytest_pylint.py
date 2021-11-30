@@ -300,7 +300,7 @@ def test_invalidate_cache_when_config_changes(testdir):
     result = testdir.runpytest("--pylint", "--pylint-rcfile={0}".format(rcfile.strpath))
     assert "1 passed" in result.stdout.str()
 
-    with open(rcfile, "w"):
+    with open(rcfile, "w", encoding="utf-8"):
         pass
 
     result = testdir.runpytest("--pylint", "--pylint-rcfile={0}".format(rcfile.strpath))
@@ -314,7 +314,7 @@ def test_output_file(testdir):
     output_file = os.path.join(testdir.tmpdir.strpath, "pylint.report")
     assert os.path.isfile(output_file)
 
-    with open(output_file, "r") as _file:
+    with open(output_file, "r", encoding="utf-8") as _file:
         report = _file.read()
 
     assert (
