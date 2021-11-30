@@ -13,6 +13,7 @@ import pytest
 pytest_plugins = ("pytester",)  # pylint: disable=invalid-name
 
 
+# pylint: disable=consider-using-f-string
 def test_basic(testdir):
     """Verify basic pylint checks"""
     testdir.makepyfile("import sys")

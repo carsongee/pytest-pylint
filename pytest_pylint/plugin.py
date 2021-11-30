@@ -358,6 +358,7 @@ class PyLintItem(pytest.Item):
         # Update the cache if the item passed pylint.
         self.plugin.mtimes[self.parent.rel_path] = self.parent.mtime
 
+    # pylint: disable=unused-argument
     def repr_failure(self, excinfo, style=None):
         """Handle any test failures by checking that they were ours."""
         # pylint: disable=arguments-differ
