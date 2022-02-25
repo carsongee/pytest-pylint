@@ -18,7 +18,7 @@ by previous plugins will run. For instance, in case PylintPlugin had
 `pytest_addoption` implemented, which runs before `pytest_configure`
 in the hook cycle, it would be executed once PylintPlugin got registered.
 
-PylintPlugin uses the `pytest_collect_file` hook which is called wih every
+PylintPlugin uses the `pytest_collect_file` hook which is called with every
 file available in the test target dir. This hook collects all the file
 pylint should run on, in this case files with extension ".py".
 

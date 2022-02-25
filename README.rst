@@ -161,7 +161,7 @@ Releases
 0.8.0
 ~~~~~
 
-- `bdrung <https://github.com/bdrung>`__ corrected inconsitent returns in a function
+- `bdrung <https://github.com/bdrung>`__ corrected inconsistent returns in a function
 - Dropped Python 3.3 support
 
 0.7.1
