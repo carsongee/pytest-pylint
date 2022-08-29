@@ -130,6 +130,10 @@ def test_pylintrc_file_pyproject_toml(testdir):
     assert "Line too long (10/3)" in result.stdout.str()
 
 
+@pytest.mark.skipif(
+    not hasattr(pytest, "version_tuple") or pytest.version_tuple >= (7, 0),
+    reason="FIXME",
+)
 def test_pylintrc_file_beside_ini(testdir):
     """
     Verify that a specified pylint rc file will work what placed into pytest
