@@ -8,10 +8,13 @@ Plugin for py.test for doing pylint tests
 
 from setuptools import setup
 
+with open("README.rst", encoding="utf-8") as f:
+    LONG_DESCRIPTION = f.read()
+
 setup(
     name="pytest-pylint",
     description="pytest plugin to check source code with pylint",
-    long_description=open("README.rst").read(),
+    long_description=LONG_DESCRIPTION,
     license="MIT",
     version="0.18.0",
     author="Carson Gee",
