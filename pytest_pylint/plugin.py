@@ -9,6 +9,7 @@ from collections import defaultdict
 from configparser import ConfigParser, NoOptionError, NoSectionError
 from os import makedirs
 from os.path import dirname, exists, getmtime, join
+from pathlib import Path
 
 import pytest
 import toml
@@ -125,13 +126,19 @@ class PylintPlugin:
             # Check if pylint config has a different filename or date
             # and invalidate the cache if it has changed.
             pylint_mtime = getmtime(pylintrc_file)
-            cache_key = PYLINT_CONFIG_CACHE_KEY + pylintrc_file
+            cache_key = PYLINT_CONFIG_CACHE_KEY + (
+                pylintrc_file.name if isinstance(pylintrc_file, Path) else pylintrc_file
+            )
             cache_value = self.mtimes.get(cache_key)
             if cache_value is None or cache_value < pylint_mtime:
                 self.mtimes = {}
             self.mtimes[cache_key] = pylint_mtime
 
-            if pylintrc_file.endswith(".toml"):
+            if (
+                (pylintrc_file.suffix == ".toml")
+                if isinstance(pylintrc_file, Path)
+                else pylintrc_file.endswith(".toml")
+            ):
                 self._load_pyproject_toml(pylintrc_file)
             else:
                 self._load_rc_file(pylintrc_file)
