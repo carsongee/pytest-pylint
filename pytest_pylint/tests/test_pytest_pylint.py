@@ -169,29 +169,30 @@ def test_pylintrc_file_beside_ini(testdir):
 
 
 @pytest.mark.parametrize("rcformat", ("ini", "toml", "simple_toml"))
-def test_pylintrc_ignore(testdir, rcformat):
+@pytest.mark.parametrize("sectionname", ("main", "master"))
+def test_pylintrc_ignore(testdir, rcformat, sectionname):
     """Verify that a pylintrc file with ignores will work."""
     if rcformat == "toml":
         rcfile = testdir.makefile(
             ".toml",
-            """
-            [tool.pylint.master]
+            f"""
+            [tool.pylint.{sectionname}]
             ignore = ["test_pylintrc_ignore.py", "foo.py"]
             """,
         )
     elif rcformat == "simple_toml":
         rcfile = testdir.makefile(
             ".toml",
-            """
-            [tool.pylint.MASTER]
+            f"""
+            [tool.pylint.{sectionname.upper()}]
             ignore = "test_pylintrc_ignore.py,foo.py"
             """,
         )
     else:
         rcfile = testdir.makefile(
             ".rc",
-            """
-            [MASTER]
+            f"""
+            [{sectionname.upper()}]
 
             ignore = test_pylintrc_ignore.py
             """,
@@ -366,7 +367,8 @@ def test_cmd_line_ignore(testdir, arg_opt_name, arg_opt_value):
     [("ignore", "test_cmd_line_ignore_pri_arg.py"), ("ignore-patterns", ".*arg.py$")],
     ids=["ignore", "ignore-patterns"],
 )
-def test_cmd_line_ignore_pri(testdir, arg_opt_name, arg_opt_value):
+@pytest.mark.parametrize("sectionname", ("main", "master"))
+def test_cmd_line_ignore_pri(testdir, arg_opt_name, arg_opt_value, sectionname):
     """
     Verify that command line ignores and patterns take priority over
     rcfile ignores.
@@ -377,13 +379,11 @@ def test_cmd_line_ignore_pri(testdir, arg_opt_name, arg_opt_value):
 
     rcfile = testdir.makefile(
         ".rc",
-        """
-        [MASTER]
+        f"""
+        [{sectionname.upper()}]
 
-        {0} = {1},foo
-        """.format(
-            arg_opt_name, file_ignore
-        ),
+        {arg_opt_name} = {file_ignore},foo
+        """,
     )
     testdir.makepyfile(**{file_ignore: "import sys", cmd_arg_ignore: "import os"})
     result = testdir.runpytest(

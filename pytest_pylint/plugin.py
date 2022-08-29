@@ -149,18 +149,28 @@ class PylintPlugin:
         self.pylint_config.read(pylintrc_file)
 
         try:
-            ignore_string = self.pylint_config.get("MASTER", "ignore")
+            ignore_string = self.pylint_config.get("MAIN", "ignore")
             if ignore_string:
                 self.pylint_ignore = ignore_string.split(",")
         except (NoSectionError, NoOptionError):
-            pass
+            try:
+                ignore_string = self.pylint_config.get("MASTER", "ignore")
+                if ignore_string:
+                    self.pylint_ignore = ignore_string.split(",")
+            except (NoSectionError, NoOptionError):
+                pass
 
         try:
-            ignore_patterns = self.pylint_config.get("MASTER", "ignore-patterns")
+            ignore_patterns = self.pylint_config.get("MAIN", "ignore-patterns")
             if ignore_patterns:
                 self.pylint_ignore_patterns = ignore_patterns.split(",")
         except (NoSectionError, NoOptionError):
-            pass
+            try:
+                ignore_patterns = self.pylint_config.get("MASTER", "ignore-patterns")
+                if ignore_patterns:
+                    self.pylint_ignore_patterns = ignore_patterns.split(",")
+            except (NoSectionError, NoOptionError):
+                pass
 
         try:
             self.pylint_msg_template = self.pylint_config.get("REPORTS", "msg-template")
@@ -179,20 +189,20 @@ class PylintPlugin:
         except KeyError:
             return
 
-        master_section = {}
+        main_section = {}
         reports_section = {}
         for key, value in self.pylint_config.items():
-            if not master_section and key.lower() == "master":
-                master_section = value
+            if not main_section and key.lower() in ("main", "master"):
+                main_section = value
             elif not reports_section and key.lower() == "reports":
                 reports_section = value
 
-        ignore = master_section.get("ignore")
+        ignore = main_section.get("ignore")
         if ignore:
             self.pylint_ignore = (
                 ignore.split(",") if isinstance(ignore, str) else ignore
             )
-        self.pylint_ignore_patterns = master_section.get("ignore-patterns") or []
+        self.pylint_ignore_patterns = main_section.get("ignore-patterns") or []
         self.pylint_msg_template = reports_section.get("msg-template")
 
     def pytest_sessionfinish(self, session):
