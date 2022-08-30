@@ -22,7 +22,7 @@ setup(
     python_requires=">=3.7",
     install_requires=["pytest>=5.4", "pylint>=2.3.0", "toml>=0.7.1"],
     setup_requires=["pytest-runner"],
-    tests_require=["coverage", "pytest-flake8", "pytest-black", "pytest-isort"],
+    tests_require=["coverage", "flake8", "black", "isort"],
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",

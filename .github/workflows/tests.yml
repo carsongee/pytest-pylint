@@ -38,3 +38,6 @@ jobs:
 
       - name: Run coverage
         run: tox -e coverage
+
+      - name: Run linters
+        run: tox -e qa
