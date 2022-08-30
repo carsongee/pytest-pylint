@@ -1,7 +1,7 @@
 pytest pylint
 -------------
-.. image:: https://img.shields.io/travis/carsongee/pytest-pylint.svg
-    :target: https://travis-ci.org/carsongee/pytest-pylint
+.. image:: https://github.com/carsongee/pytest-pylint/actions/workflows/tests.yml/badge.svg
+    :target: https://github.com/carsongee/pytest-pylint/actions/workflows/tests.yml
 .. image:: https://img.shields.io/coveralls/carsongee/pytest-pylint.svg
     :target: https://coveralls.io/r/carsongee/pytest-pylint
 .. image:: https://img.shields.io/pypi/v/pytest-pylint.svg
@@ -42,7 +42,7 @@ tests by typing:
 Acknowledgements
 ================
 
-This code is heavily based on 
+This code is heavily based on
 `pytest-flakes <https://github.com/fschulze/pytest-flakes>`__
 
 Development
