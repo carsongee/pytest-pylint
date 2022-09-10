@@ -16,7 +16,7 @@ setup(
     description="pytest plugin to check source code with pylint",
     long_description=LONG_DESCRIPTION,
     license="MIT",
-    version="0.18.0",
+    version="0.19.0",
     author="Carson Gee",
     author_email="x@carsongee.com",
     url="https://github.com/carsongee/pytest-pylint",
