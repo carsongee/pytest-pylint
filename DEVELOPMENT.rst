@@ -63,25 +63,26 @@ Double-check on `tox.ini <https://github.com/carsongee/pytest-pylint//lob/master
 
 .. code-block:: shell
 
-    pyenv install 3.5.9
-
-    pyenv install 3.6.10
-
     pyenv install 3.7.7
 
     pyenv install 3.8.2
+
+    pyenv install 3.9.13
+
+    pyenv install 3.10.6
+    
 
 Set the installed versions as global, that will allow tox to find all of them.
 
 .. code-block:: shell
 
-    pyenv global 3.5.9 3.6.10 3.7.7 3.8.2
+    pyenv global 3.10.6 3.9.13 3.8.2 3.7.7
 
 Create virtualenv, install dependencies, run tests, and tox:
 
 .. code-block:: shell
 
-    python3.8 -m venv .pytest_pylint
+    python3.10 -m venv .pytest_pylint
 
     source .pytest_pylint/bin/activate
 

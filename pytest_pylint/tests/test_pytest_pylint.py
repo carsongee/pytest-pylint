@@ -82,7 +82,7 @@ def test_pylintrc_file(testdir):
         """,
     )
     testdir.makepyfile("import sys")
-    result = testdir.runpytest("--pylint", "--pylint-rcfile={0}".format(rcfile.strpath))
+    result = testdir.runpytest("--pylint", f"--pylint-rcfile={rcfile.strpath}")
     assert "Line too long (10/3)" in result.stdout.str()
 
 
@@ -96,7 +96,7 @@ def test_pylintrc_file_toml(testdir):
         """,
     )
     testdir.makepyfile("import sys")
-    result = testdir.runpytest("--pylint", "--pylint-rcfile={0}".format(rcfile.strpath))
+    result = testdir.runpytest("--pylint", f"--pylint-rcfile={rcfile.strpath}")
     # Parsing changed from integer to string in pylint >=2.5. Once
     # support is dropped <2.5 this is removable
     if "should be of type int" in result.stdout.str():
@@ -107,9 +107,7 @@ def test_pylintrc_file_toml(testdir):
             max-line-length = 3
             """,
         )
-        result = testdir.runpytest(
-            "--pylint", "--pylint-rcfile={0}".format(rcfile.strpath)
-        )
+        result = testdir.runpytest("--pylint", f"--pylint-rcfile={rcfile.strpath}")
 
     assert "Line too long (10/3)" in result.stdout.str()
 
@@ -134,32 +132,36 @@ def test_pylintrc_file_pyproject_toml(testdir):
 
 def test_pylintrc_file_beside_ini(testdir):
     """
-    Verify that a specified pylint rc file will work what placed into pytest
+    Verify that a specified pylint rc file will work when placed into pytest
     ini dir.
     """
     non_cwd_dir = testdir.mkdir("non_cwd_dir")
 
     rcfile = non_cwd_dir.join("foo.rc")
     rcfile.write(
-        """
+        dedent(
+            """
         [FORMAT]
 
         max-line-length=3
         """
+        )
     )
     inifile = non_cwd_dir.join("foo.ini")
     inifile.write(
         dedent(
-            """
+            f"""
         [pytest]
-        addopts = --pylint --pylint-rcfile={0}
-        """.format(
-                rcfile.basename
-            )
+        addopts = --pylint --pylint-rcfile={rcfile.strpath}
+        """
         )
     )
-
-    pyfile = testdir.makepyfile("import sys")
+    # Per https://github.com/pytest-dev/pytest/pull/8537/ the rootdir
+    # is now wherever the ini file is, so we need to make sure our
+    # Python file is the right directory.
+    pyfile_base = testdir.makepyfile("import sys")
+    pyfile = non_cwd_dir / pyfile_base.basename
+    pyfile_base.rename(pyfile)
 
     result = testdir.runpytest(pyfile.strpath)
     assert "Line too long (10/3)" not in result.stdout.str()
@@ -169,35 +171,36 @@ def test_pylintrc_file_beside_ini(testdir):
 
 
 @pytest.mark.parametrize("rcformat", ("ini", "toml", "simple_toml"))
-def test_pylintrc_ignore(testdir, rcformat):
+@pytest.mark.parametrize("sectionname", ("main", "master"))
+def test_pylintrc_ignore(testdir, rcformat, sectionname):
     """Verify that a pylintrc file with ignores will work."""
     if rcformat == "toml":
         rcfile = testdir.makefile(
             ".toml",
-            """
-            [tool.pylint.master]
+            f"""
+            [tool.pylint.{sectionname}]
             ignore = ["test_pylintrc_ignore.py", "foo.py"]
             """,
         )
     elif rcformat == "simple_toml":
         rcfile = testdir.makefile(
             ".toml",
-            """
-            [tool.pylint.MASTER]
+            f"""
+            [tool.pylint.{sectionname.upper()}]
             ignore = "test_pylintrc_ignore.py,foo.py"
             """,
         )
     else:
         rcfile = testdir.makefile(
             ".rc",
-            """
-            [MASTER]
+            f"""
+            [{sectionname.upper()}]
 
             ignore = test_pylintrc_ignore.py
             """,
         )
     testdir.makepyfile("import sys")
-    result = testdir.runpytest("--pylint", "--pylint-rcfile={0}".format(rcfile.strpath))
+    result = testdir.runpytest("--pylint", f"--pylint-rcfile={rcfile.strpath}")
     assert "collected 0 items" in result.stdout.str()
 
 
@@ -222,7 +225,7 @@ def test_pylintrc_msg_template(testdir, rcformat):
             """,
         )
     testdir.makepyfile("import sys")
-    result = testdir.runpytest("--pylint", "--pylint-rcfile={0}".format(rcfile.strpath))
+    result = testdir.runpytest("--pylint", f"--pylint-rcfile={rcfile.strpath}")
     assert "start W0611 end" in result.stdout.str()
 
 
@@ -233,7 +236,7 @@ def test_multiple_jobs(testdir):
     testdir.makepyfile("import sys")
     with mock.patch("pytest_pylint.plugin.lint.Run") as run_mock:
         jobs = 0
-        testdir.runpytest("--pylint", "--pylint-jobs={0}".format(jobs))
+        testdir.runpytest("--pylint", f"--pylint-jobs={jobs}")
     assert run_mock.call_count == 1
     assert run_mock.call_args[0][0][-2:] == ["-j", str(jobs)]
 
@@ -281,29 +284,27 @@ def test_invalidate_cache_when_config_changes(testdir):
         ".rc", "[MESSAGES CONTROL]", "disable=missing-final-newline"
     )
     testdir.makepyfile('"""hi."""')
-    result = testdir.runpytest("--pylint", "--pylint-rcfile={0}".format(rcfile.strpath))
+    result = testdir.runpytest("--pylint", f"--pylint-rcfile={rcfile.strpath}")
     assert "1 passed" in result.stdout.str()
 
-    result = testdir.runpytest("--pylint", "--pylint-rcfile={0}".format(rcfile.strpath))
+    result = testdir.runpytest("--pylint", f"--pylint-rcfile={rcfile.strpath}")
     assert "1 skipped" in result.stdout.str()
 
     # Change RC file entirely
     alt_rcfile = testdir.makefile(
         ".rc", alt="[MESSAGES CONTROL]\ndisable=unbalanced-tuple-unpacking"
     )
-    result = testdir.runpytest(
-        "--pylint", "--pylint-rcfile={0}".format(alt_rcfile.strpath)
-    )
+    result = testdir.runpytest("--pylint", f"--pylint-rcfile={alt_rcfile.strpath}")
     assert "1 failed" in result.stdout.str()
 
     # Change contents of RC file
-    result = testdir.runpytest("--pylint", "--pylint-rcfile={0}".format(rcfile.strpath))
+    result = testdir.runpytest("--pylint", f"--pylint-rcfile={rcfile.strpath}")
     assert "1 passed" in result.stdout.str()
 
-    with open(rcfile, "w"):
+    with open(rcfile, "w", encoding="utf-8"):
         pass
 
-    result = testdir.runpytest("--pylint", "--pylint-rcfile={0}".format(rcfile.strpath))
+    result = testdir.runpytest("--pylint", f"--pylint-rcfile={rcfile.strpath}")
     assert "1 failed" in result.stdout.str()
 
 
@@ -314,7 +315,7 @@ def test_output_file(testdir):
     output_file = os.path.join(testdir.tmpdir.strpath, "pylint.report")
     assert os.path.isfile(output_file)
 
-    with open(output_file, "r") as _file:
+    with open(output_file, "r", encoding="utf-8") as _file:
         report = _file.read()
 
     assert (
@@ -339,11 +340,11 @@ def test_output_file_makes_dirs(testdir):
     """Verify output works with folders properly."""
     testdir.makepyfile("import sys")
     output_path = os.path.join("reports", "pylint.report")
-    testdir.runpytest("--pylint", "--pylint-output-file={}".format(output_path))
+    testdir.runpytest("--pylint", f"--pylint-output-file={output_path}")
     output_file = os.path.join(testdir.tmpdir.strpath, output_path)
     assert os.path.isfile(output_file)
     # Run again to make sure we don't crash trying to make a dir that exists
-    testdir.runpytest("--pylint", "--pylint-output-file={}".format(output_path))
+    testdir.runpytest("--pylint", f"--pylint-output-file={output_path}")
 
 
 @pytest.mark.parametrize(
@@ -354,9 +355,7 @@ def test_output_file_makes_dirs(testdir):
 def test_cmd_line_ignore(testdir, arg_opt_name, arg_opt_value):
     """Verify that cmd line args ignores will work."""
     testdir.makepyfile(test_cmd_line_ignore="import sys")
-    result = testdir.runpytest(
-        "--pylint", "--pylint-{0}={1}".format(arg_opt_name, arg_opt_value)
-    )
+    result = testdir.runpytest("--pylint", f"--pylint-{arg_opt_name}={arg_opt_value}")
     assert "collected 0 items" in result.stdout.str()
     assert "Unused import sys" not in result.stdout.str()
 
@@ -366,7 +365,8 @@ def test_cmd_line_ignore(testdir, arg_opt_name, arg_opt_value):
     [("ignore", "test_cmd_line_ignore_pri_arg.py"), ("ignore-patterns", ".*arg.py$")],
     ids=["ignore", "ignore-patterns"],
 )
-def test_cmd_line_ignore_pri(testdir, arg_opt_name, arg_opt_value):
+@pytest.mark.parametrize("sectionname", ("main", "master"))
+def test_cmd_line_ignore_pri(testdir, arg_opt_name, arg_opt_value, sectionname):
     """
     Verify that command line ignores and patterns take priority over
     rcfile ignores.
@@ -377,19 +377,17 @@ def test_cmd_line_ignore_pri(testdir, arg_opt_name, arg_opt_value):
 
     rcfile = testdir.makefile(
         ".rc",
-        """
-        [MASTER]
+        f"""
+        [{sectionname.upper()}]
 
-        {0} = {1},foo
-        """.format(
-            arg_opt_name, file_ignore
-        ),
+        {arg_opt_name} = {file_ignore},foo
+        """,
     )
     testdir.makepyfile(**{file_ignore: "import sys", cmd_arg_ignore: "import os"})
     result = testdir.runpytest(
         "--pylint",
-        "--pylint-rcfile={0}".format(rcfile.strpath),
-        "--pylint-{0}={1}".format(arg_opt_name, cmd_line_ignore),
+        f"--pylint-rcfile={rcfile.strpath}",
+        f"--pylint-{arg_opt_name}={cmd_line_ignore}",
         "-s",
     )
 
