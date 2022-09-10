@@ -248,7 +248,11 @@ class PylintPlugin:
 
         # To try and bullet proof our paths, use our
         # relative paths to the resolved path of the pytest rootpath
-        root_path = session.config.rootpath.resolve()
+        try:
+            root_path = session.config.rootpath.resolve()
+        except AttributeError:
+            root_path = Path(session.config.rootdir.realpath())
+
         args_list = [
             str((root_path / file_path).relative_to(getcwd()))
             for file_path in self.pylint_files
