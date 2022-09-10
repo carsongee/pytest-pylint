@@ -1,7 +1,7 @@
 pytest pylint
 -------------
-.. image:: https://img.shields.io/travis/carsongee/pytest-pylint.svg
-    :target: https://travis-ci.org/carsongee/pytest-pylint
+.. image:: https://github.com/carsongee/pytest-pylint/actions/workflows/tests.yml/badge.svg
+    :target: https://github.com/carsongee/pytest-pylint/actions/workflows/tests.yml
 .. image:: https://img.shields.io/coveralls/carsongee/pytest-pylint.svg
     :target: https://coveralls.io/r/carsongee/pytest-pylint
 .. image:: https://img.shields.io/pypi/v/pytest-pylint.svg
@@ -42,7 +42,7 @@ tests by typing:
 Acknowledgements
 ================
 
-This code is heavily based on 
+This code is heavily based on
 `pytest-flakes <https://github.com/fschulze/pytest-flakes>`__
 
 Development
@@ -53,6 +53,15 @@ If you want to help development, there is
 
 Releases
 ========
+
+0.19.0
+~~~~~~
+
+- Switched to GitHub Actions for CI thanks to `michael-k <https://github.com/michael-k>`__
+- Switched to using smart PyLint RC discovery thanks to `bennyrowland <https://github.com/bennyrowland>`__
+- Correcting rootdir/rootpath issues in pytest >7.x
+- Deprecated support for Python <3.7
+
 
 0.18.0
 ~~~~~~
@@ -161,7 +170,7 @@ Releases
 0.8.0
 ~~~~~
 
-- `bdrung <https://github.com/bdrung>`__ corrected inconsitent returns in a function
+- `bdrung <https://github.com/bdrung>`__ corrected inconsistent returns in a function
 - Dropped Python 3.3 support
 
 0.7.1

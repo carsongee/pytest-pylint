@@ -8,8 +8,9 @@ from pylint.reporters import BaseReporter
 
 class ProgrammaticReporter(BaseReporter):
     """Reporter that replaces output with storage in list of dictionaries"""
+
     __implements__ = IReporter
-    extension = 'prog'
+    extension = "prog"
 
     def __init__(self, output=None):
         BaseReporter.__init__(self, output)
@@ -29,10 +30,10 @@ class ProgrammaticReporter(BaseReporter):
 
     def on_set_current_module(self, module, filepath):
         """Hook called when a module starts to be analysed."""
-        print('.', end='')
+        print(".", end="")
         sys.stdout.flush()
 
     def on_close(self, stats, previous_stats):
         """Hook called when all modules finished analyzing."""
         # print a new line when pylint is finished
-        print('')
+        print("")
