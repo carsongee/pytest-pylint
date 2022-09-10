@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-    pytest plugins. Both pylint wrapper and PylintPlugin
-
+pytest plugins. Both pylint wrapper and PylintPlugin
 """
 
 
 from collections import defaultdict
 from configparser import ConfigParser, NoOptionError, NoSectionError
-from os import makedirs
+from os import getcwd, makedirs, sep
 from os.path import dirname, exists, getmtime, join
 from pathlib import Path
 
@@ -246,8 +245,15 @@ class PylintPlugin:
 
         jobs = session.config.option.pylint_jobs
         reporter = ProgrammaticReporter()
-        # Build argument list for pylint
-        args_list = list(self.pylint_files)
+
+        # To try and bullet proof our paths, use our
+        # relative paths to the resolved path of the pytest rootpath
+        root_path = session.config.rootpath.resolve()
+        args_list = [
+            str((root_path / file_path).relative_to(getcwd()))
+            for file_path in self.pylint_files
+        ]
+        # Add any additional arguments to our pylint run
         if self.pylintrc_file:
             args_list.append(f"--rcfile={self.pylintrc_file}")
         if jobs is not None:
@@ -274,10 +280,14 @@ class PylintPlugin:
         except TypeError:
             # pylint < 2.5.1 API
             result = lint.Run(args_list, reporter=reporter, do_exit=False)
+
         messages = result.linter.reporter.data
         # Stores the messages in a dictionary for lookup in tests.
         for message in messages:
-            self.pylint_messages[message.path].append(message)
+            # Undo our mapping to resolved absolute paths to map
+            # back to self.pylint_files
+            relpath = message.abspath.replace(f"{root_path}{sep}", "")
+            self.pylint_messages[relpath].append(message)
         print("-" * FILL_CHARS)
 
 

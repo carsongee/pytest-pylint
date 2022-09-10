@@ -130,36 +130,38 @@ def test_pylintrc_file_pyproject_toml(testdir):
     assert "Line too long (10/3)" in result.stdout.str()
 
 
-@pytest.mark.skipif(
-    not hasattr(pytest, "version_tuple") or pytest.version_tuple >= (7, 0),
-    reason="FIXME",
-)
 def test_pylintrc_file_beside_ini(testdir):
     """
-    Verify that a specified pylint rc file will work what placed into pytest
+    Verify that a specified pylint rc file will work when placed into pytest
     ini dir.
     """
     non_cwd_dir = testdir.mkdir("non_cwd_dir")
 
     rcfile = non_cwd_dir.join("foo.rc")
     rcfile.write(
-        """
+        dedent(
+            """
         [FORMAT]
 
         max-line-length=3
         """
+        )
     )
     inifile = non_cwd_dir.join("foo.ini")
     inifile.write(
         dedent(
             f"""
         [pytest]
-        addopts = --pylint --pylint-rcfile={rcfile.basename}
+        addopts = --pylint --pylint-rcfile={rcfile.strpath}
         """
         )
     )
-
-    pyfile = testdir.makepyfile("import sys")
+    # Per https://github.com/pytest-dev/pytest/pull/8537/ the rootdir
+    # is now wherever the ini file is, so we need to make sure our
+    # Python file is the right directory.
+    pyfile_base = testdir.makepyfile("import sys")
+    pyfile = non_cwd_dir / pyfile_base.basename
+    pyfile_base.rename(pyfile)
 
     result = testdir.runpytest(pyfile.strpath)
     assert "Line too long (10/3)" not in result.stdout.str()
