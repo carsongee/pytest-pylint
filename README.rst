@@ -54,6 +54,13 @@ If you want to help development, there is
 Releases
 ========
 
+0.21.0
+~~~~~~
+- Dropped support for pytest < 7.0 in preparation for pytest 8.0 (should work with it when it comes out)
+- Dropped support for pylint < 2.15 to work better with Python 3.11 and drop backwards compatibility code
+- Use baked in TOML support with fallback to newer tomli library thanks to `mgorny <https://github.com/mgorny>`__
+
+
 0.20.0
 ~~~~~~
 - Corrected issues introduced by deprecations in pylint
