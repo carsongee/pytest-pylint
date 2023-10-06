@@ -5,7 +5,7 @@ pytest-pylint
 
 Plugin for py.test for doing pylint tests
 """
-
+# pylint: disable=import-error
 from setuptools import setup
 
 with open("README.rst", encoding="utf-8") as f:
@@ -24,7 +24,7 @@ setup(
     entry_points={"pytest11": ["pylint = pytest_pylint.plugin"]},
     python_requires=">=3.7",
     install_requires=[
-        "pytest>=5.4",
+        "pytest>=5.4,<8.0",
         "pylint>=2.3.0",
         "tomli>=1.1.0; python_version < '3.11'",
     ],
@@ -34,10 +34,10 @@ setup(
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
     ],
 )

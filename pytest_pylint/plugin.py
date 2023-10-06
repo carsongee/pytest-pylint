@@ -116,6 +116,7 @@ class PylintPlugin:
             try:
                 pylintrc_file = next(pylint_config.find_default_config_files(), None)
             except AttributeError:
+                # pylint: disable=no-member
                 pylintrc_file = pylint_config.PYLINTRC
 
         if pylintrc_file and not exists(pylintrc_file):
@@ -396,4 +397,5 @@ class PyLintItem(pytest.Item):
 
     def reportinfo(self):
         """Generate our test report"""
+        # pylint: disable=no-member
         return self.fspath, None, f"[pylint] {self.parent.rel_path}"
