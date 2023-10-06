@@ -54,6 +54,12 @@ If you want to help development, there is
 Releases
 ========
 
+0.20.0
+~~~~~~
+- Corrected issues introduced by deprecations in pylint
+- Added support for Python 3.12 and dropped support for Python 3.7
+- Last version that will support pytest < 7 and pylint < 2.6
+
 0.19.0
 ~~~~~~
 
