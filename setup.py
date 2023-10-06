@@ -23,7 +23,11 @@ setup(
     packages=["pytest_pylint"],
     entry_points={"pytest11": ["pylint = pytest_pylint.plugin"]},
     python_requires=">=3.7",
-    install_requires=["pytest>=7.0", "pylint>=2.15.0", "toml>=0.7.1"],
+    install_requires=[
+        "pytest>=7.0",
+        "pylint>=2.15.0",
+        "tomli>=1.1.0; python_version < '3.11'",
+    ],
     setup_requires=["pytest-runner"],
     tests_require=["coverage", "flake8", "black", "isort"],
     classifiers=[

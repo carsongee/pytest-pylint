@@ -4,6 +4,7 @@ pytest plugins. Both pylint wrapper and PylintPlugin
 """
 
 
+import sys
 from collections import defaultdict
 from configparser import ConfigParser, NoOptionError, NoSectionError
 from os import getcwd, makedirs, sep
@@ -11,12 +12,17 @@ from os.path import dirname, exists, getmtime, join
 from pathlib import Path
 
 import pytest
-import toml
 from pylint import config as pylint_config
 from pylint import lint
 
 from .pylint_util import ProgrammaticReporter
 from .util import PyLintException, get_rel_path, should_include_file
+
+if sys.version_info >= (3, 11):
+    import tomllib
+else:
+    # pylint: disable=import-error
+    import tomli as tomllib
 
 HISTKEY = "pylint/mtimes"
 PYLINT_CONFIG_CACHE_KEY = "pylintrc"
@@ -178,10 +184,10 @@ class PylintPlugin:
             pass
 
     def _load_pyproject_toml(self, pylintrc_file):
-        with open(pylintrc_file, "r", encoding="utf-8") as f_p:
+        with open(pylintrc_file, "rb") as f_p:
             try:
-                content = toml.load(f_p)
-            except (TypeError, toml.decoder.TomlDecodeError):
+                content = tomllib.load(f_p)
+            except (TypeError, tomllib.TOMLDecodeError):
                 return
 
         try:
