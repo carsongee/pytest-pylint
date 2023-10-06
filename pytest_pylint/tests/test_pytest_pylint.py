@@ -2,7 +2,7 @@
 """
 Unit testing module for pytest-pylint plugin
 """
-import os
+import pathlib
 import re
 from textwrap import dedent
 from unittest import mock
@@ -312,8 +312,8 @@ def test_output_file(testdir):
     """Verify pylint report output"""
     testdir.makepyfile("import sys")
     testdir.runpytest("--pylint", "--pylint-output-file=pylint.report")
-    output_file = os.path.join(testdir.tmpdir.strpath, "pylint.report")
-    assert os.path.isfile(output_file)
+    output_file = pathlib.Path(testdir.tmpdir.strpath) / "pylint.report"
+    assert output_file.is_file()
 
     with open(output_file, "r", encoding="utf-8") as _file:
         report = _file.read()
@@ -339,10 +339,10 @@ def test_output_file(testdir):
 def test_output_file_makes_dirs(testdir):
     """Verify output works with folders properly."""
     testdir.makepyfile("import sys")
-    output_path = os.path.join("reports", "pylint.report")
+    output_path = pathlib.Path("reports", "pylint.report")
     testdir.runpytest("--pylint", f"--pylint-output-file={output_path}")
-    output_file = os.path.join(testdir.tmpdir.strpath, output_path)
-    assert os.path.isfile(output_file)
+    output_file = pathlib.Path(testdir.tmpdir.strpath) / output_path
+    assert output_file.is_file()
     # Run again to make sure we don't crash trying to make a dir that exists
     testdir.runpytest("--pylint", f"--pylint-output-file={output_path}")
 

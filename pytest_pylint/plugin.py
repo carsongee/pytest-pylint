@@ -4,6 +4,7 @@ pytest plugins. Both pylint wrapper and PylintPlugin
 """
 
 
+import sys
 from collections import defaultdict
 from configparser import ConfigParser, NoOptionError, NoSectionError
 from os import getcwd, makedirs, sep
@@ -11,12 +12,17 @@ from os.path import dirname, exists, getmtime, join
 from pathlib import Path
 
 import pytest
-import toml
 from pylint import config as pylint_config
 from pylint import lint
 
 from .pylint_util import ProgrammaticReporter
 from .util import PyLintException, get_rel_path, should_include_file
+
+if sys.version_info >= (3, 11):
+    import tomllib
+else:
+    # pylint: disable=import-error
+    import tomli as tomllib
 
 HISTKEY = "pylint/mtimes"
 PYLINT_CONFIG_CACHE_KEY = "pylintrc"
@@ -105,14 +111,7 @@ class PylintPlugin:
         if config.option.pylint_rcfile:
             pylintrc_file = config.option.pylint_rcfile
         else:
-            # handling files apart from pylintrc was only introduced in pylint
-            # 2.5, if we can't use find_default_config_files(), fall back on PYLINTRC
-            # once we drop support below 2.5 we can get rid of this
-            try:
-                pylintrc_file = next(pylint_config.find_default_config_files(), None)
-            except AttributeError:
-                # pylint: disable=no-member
-                pylintrc_file = pylint_config.PYLINTRC
+            pylintrc_file = next(pylint_config.find_default_config_files(), None)
 
         if pylintrc_file and not exists(pylintrc_file):
             # The directory of pytest.ini got a chance
@@ -185,10 +184,10 @@ class PylintPlugin:
             pass
 
     def _load_pyproject_toml(self, pylintrc_file):
-        with open(pylintrc_file, "r", encoding="utf-8") as f_p:
+        with open(pylintrc_file, "rb") as f_p:
             try:
-                content = toml.load(f_p)
-            except (TypeError, toml.decoder.TomlDecodeError):
+                content = tomllib.load(f_p)
+            except (TypeError, tomllib.TOMLDecodeError):
                 return
 
         try:
@@ -226,11 +225,11 @@ class PylintPlugin:
         if path.ext != ".py":
             return None
 
-        rel_path = get_rel_path(path.strpath, parent.session.fspath.strpath)
+        rel_path = get_rel_path(path.strpath, str(parent.session.path))
         if should_include_file(
             rel_path, self.pylint_ignore, self.pylint_ignore_patterns
         ):
-            item = PylintFile.from_parent(parent, fspath=path, plugin=self)
+            item = PylintFile.from_parent(parent, path=Path(path), plugin=self)
         else:
             return None
 
@@ -305,15 +304,15 @@ class PylintFile(pytest.File):
     mtime = None  # : float
 
     @classmethod
-    def from_parent(cls, parent, *, fspath, plugin):
+    def from_parent(cls, parent, *, path, plugin, **kw):
+        # pylint: disable=arguments-differ
         # We add the ``plugin`` kwarg to get plugin level information so the
         # signature differs
-        # pylint: disable=arguments-differ
-        _self = getattr(super(), "from_parent", cls)(parent, fspath=fspath)
+        _self = getattr(super(), "from_parent", cls)(parent, path=path, **kw)
         _self.plugin = plugin
 
-        _self.rel_path = get_rel_path(fspath.strpath, parent.session.fspath.strpath)
-        _self.mtime = fspath.mtime()
+        _self.rel_path = get_rel_path(str(path), str(parent.session.path))
+        _self.mtime = path.stat().st_mtime
         prev_mtime = _self.plugin.mtimes.get(_self.rel_path, 0)
         _self.should_skip = prev_mtime == _self.mtime
 
@@ -330,8 +329,8 @@ class PyLintItem(pytest.Item):
     parent = None  # : PylintFile
     plugin = None  # : PylintPlugin
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, *args, **kw):
+        super().__init__(*args, **kw)
         self.add_marker(MARKER)
         self.plugin = self.parent.plugin
 
@@ -393,4 +392,4 @@ class PyLintItem(pytest.Item):
     def reportinfo(self):
         """Generate our test report"""
         # pylint: disable=no-member
-        return self.fspath, None, f"[pylint] {self.parent.rel_path}"
+        return self.path, None, f"[pylint] {self.parent.rel_path}"
