@@ -5,7 +5,7 @@ pytest-pylint
 
 Plugin for py.test for doing pylint tests
 """
-
+# pylint: disable=import-error
 from setuptools import setup
 
 with open("README.rst", encoding="utf-8") as f:
