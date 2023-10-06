@@ -21,6 +21,7 @@ from .util import PyLintException, get_rel_path, should_include_file
 if sys.version_info >= (3, 11):
     import tomllib
 else:
+    # pylint: disable=import-error
     import tomli as tomllib
 
 HISTKEY = "pylint/mtimes"
