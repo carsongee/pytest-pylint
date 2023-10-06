@@ -391,4 +391,5 @@ class PyLintItem(pytest.Item):
 
     def reportinfo(self):
         """Generate our test report"""
+        # pylint: disable=no-member
         return self.fspath, None, f"[pylint] {self.parent.rel_path}"

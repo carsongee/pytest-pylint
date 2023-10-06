@@ -2,14 +2,12 @@
 """Pylint reporter classes."""
 import sys
 
-from pylint.interfaces import IReporter
 from pylint.reporters import BaseReporter
 
 
 class ProgrammaticReporter(BaseReporter):
     """Reporter that replaces output with storage in list of dictionaries"""
 
-    __implements__ = IReporter
     extension = "prog"
 
     def __init__(self, output=None):
