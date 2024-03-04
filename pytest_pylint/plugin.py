@@ -220,16 +220,16 @@ class PylintPlugin:
         if hasattr(session.config, "cache"):
             session.config.cache.set(HISTKEY, self.mtimes)
 
-    def pytest_collect_file(self, path, parent):
+    def pytest_collect_file(self, file_path, parent):
         """Collect files on which pylint should run"""
-        if path.ext != ".py":
+        if file_path.suffix != ".py":
             return None
 
-        rel_path = get_rel_path(path.strpath, str(parent.session.path))
+        rel_path = file_path.relative_to(parent.session.path)
         if should_include_file(
-            rel_path, self.pylint_ignore, self.pylint_ignore_patterns
+            str(rel_path), self.pylint_ignore, self.pylint_ignore_patterns
         ):
-            item = PylintFile.from_parent(parent, path=Path(path), plugin=self)
+            item = PylintFile.from_parent(parent, path=file_path, plugin=self)
         else:
             return None
 
